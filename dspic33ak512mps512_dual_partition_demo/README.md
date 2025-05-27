@@ -20,7 +20,10 @@ _Figure 2. - dsPIC33AK512MPS512 Curiosity GP DIM_<br><br>
 
 ## Introduction
 The associated partition1 and partition2 projects demonstrate the following:
-
+* Programming the dsPIC33AK512MPS512 in Dual Partition Mode
+* Switching between partition 1 and partition 2
+* Performing a panel erase 
+* Configuring flash protection regions in Dual Partition mode
 
 ## Related Documentation 
 * [dsPIC33A Curiosity Platform Development Board (EV74H48A)](https://www.microchip.com/en-us/development-tool/ev74h48a)
