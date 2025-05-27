@@ -7,13 +7,13 @@
  *            
  * @brief     Device Configuration Bits using dsPIC MCUs
  *
- * @version   PLIB Version 1.1.0-rc.1
+ * @version   PLIB Version 1.1.0
  *
  * @skipline  Device : dsPIC33AK512MPS512
 */
 
 /*
-© [2025] Microchip Technology Inc. and its subsidiaries.
+Â© [2025] Microchip Technology Inc. and its subsidiaries.
 
     Subject to your compliance with these terms, you may use Microchip 
     software and any derivatives exclusively with Microchip products. 
@@ -286,12 +286,17 @@
 // FPED
 #pragma config FPED_ICSPPED = OFF    //ICSP Program and Erase disable bit->ICSP can program and erase
 
+// FEPUCB
 #pragma config FEPUCB_EPUCB = 0xffffffff    //User Config B Page Erase Protect bits
+
+// FWPUCB
 #pragma config FWPUCB_WPUCB = 0xffffffff    //UCB Write Protection bits
 
 // FBOOT
 #pragma config FBOOT_BTMODE = DUAL    //Device Boot Mode Configuration bits->Device is in Dual Boot mode
 #pragma config FBOOT_PROG = OFF    //Boot mode configuration word programmed bit->Boot Mode Configuration Word Not Programmed
+
+#pragma message("This generated MCC Melody content with device json version 5.13.0 is most compatible with dsPIC33AK-MP_DFP v1.0.81.")
 
 /**
  End of File

@@ -7,13 +7,13 @@
  *            
  * @brief     Device Configuration Bits using dsPIC MCUs
  *
- * @version   PLIB Version 1.1.0-rc.1
+ * @version   PLIB Version 1.1.0
  *
  * @skipline  Device : dsPIC33AK512MPS512
 */
 
 /*
-© [2025] Microchip Technology Inc. and its subsidiaries.
+Â© [2025] Microchip Technology Inc. and its subsidiaries.
 
     Subject to your compliance with these terms, you may use Microchip 
     software and any derivatives exclusively with Microchip products. 
@@ -60,6 +60,9 @@
 #pragma config FWDT_WDTEN = SW    //Watchdog Timer Enable bit->WDT is controlled by software, use WDTCON.ON bit
 #pragma config FWDT_WDTRSTEN = ON    //Watchdog Timer Reset Enable bit->WDT Event Generates a Reset
 #pragma config FWDT_WDTNVMSTL = ON    //WDT Stall During NVM Operation->Stall WDT During NVM Operation
+
+#pragma message("This generated MCC Melody content with device json version 5.13.0 is most compatible with dsPIC33AK-MP_DFP v1.0.81.")
+
 /**
  End of File
 */
