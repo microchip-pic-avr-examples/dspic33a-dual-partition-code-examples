@@ -48,7 +48,7 @@ The associated partition1 and partition2 projects demonstrate the following:
 2. Connect the USB-C cable to connector J24 of the Development Board to the host computer.
 3. Launch a Tera Term terminal (or similar), selecting the serial port used by the Development Board.
 4. Configure the serial port to run at 460800 baud.
-5. Open the partition1.X project in MPLAB® X. Within the Open Project window, check the "Open Required Projects" checkbox. This will automatically open partition2.X.<br>
+5. Open the projects/partition1.X project in MPLAB® X. Within the Open Project window, check the "Open Required Projects" checkbox. This will automatically open partition2.X.<br>
     ![Open Required Projects](./images/openRequiredProjects.jpg)<br>
     _Figure 3. - Open Required Projects_<br>
     **Note**: The Partition number has been set for partition1.X and partition2.X under Project Properties &rarr; XC-DSC &rarr; XC-DSC (Global Options) &rarr; Partition<br>
@@ -301,3 +301,9 @@ The 'b' command will perform a BOOTSWP. A successful bootswap can be seen by obs
 The 'q' command will run the breakpoint example, if in debug mode. If a breakpoint is set, this will hit the next breakpoint. The breakpoint function is simply a small function located at the same address for both partitions that does nothing and returns. The content of the function varies slightly between partition1 and partition2 so it's more obvious from which partition the function was run.
 
 The 'r' command will issue a reset. This will swap the active and Inactive Partitions if the Inactive Partition has a lower sequence number than the Active Partition or if the Active Partition contains an invalid sequence number. 
+
+## Labs Instructions
+
+This demo includes a set of labs instructions that walk through various dual partition scenarios to help demonstrate how the device functions and the impact of various settings on the devices operation, especially on reset.
+
+These instructions can be found in the /lab_instructions folder.  There are several labs and each lab assumes that the user is starting from the origial demo projects without modification from prior labs.  When running through multiple labs, make sure to reset the demo project files between in each lab.
