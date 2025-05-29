@@ -183,20 +183,20 @@
         <archiverTool>
         </archiverTool>
         <loading>
-          <makeArtifact PL="../partition2"
+          <makeArtifact PL="../partition2.X"
                         CT="1"
                         CN="default"
                         AC="true"
                         BL="true"
-                        WD="../partition2"
+                        WD="../partition2.X"
                         BC="${MAKE}  -f Makefile CONF=default"
                         DBC="${MAKE}  -f Makefile CONF=default TYPE_IMAGE=DEBUG_RUN"
                         CC="rm -rf &quot;build/default&quot; &quot;dist/default&quot;"
-                        OP="dist/default/production/partition2.production.hex"
-                        DOP="dist/default/debug/partition2.debug.elf"
-                        FL="dist/default/production/partition2.production.hex"
-                        PD="dist/default/production/partition2.production.elf"
-                        DD="dist/default/debug/partition2.debug.elf">
+                        OP="dist/default/production/partition2.X.production.hex"
+                        DOP="dist/default/debug/partition2.X.debug.elf"
+                        FL="dist/default/production/partition2.X.production.hex"
+                        PD="dist/default/production/partition2.X.production.elf"
+                        DD="dist/default/debug/partition2.X.debug.elf">
           </makeArtifact>
           <useAlternateLoadableFile>false</useAlternateLoadableFile>
           <parseOnProdLoad>false</parseOnProdLoad>
@@ -607,6 +607,8 @@
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="800000-87ffff"/>
+        <property key="programmerToGoFilePath"
+                  value="C:/work/repos/dspic33a-dual-partition-code-examples/projects/partition1.X/debug/default/partition1_ptg"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.pgmentry.voltage" value="low"/>
