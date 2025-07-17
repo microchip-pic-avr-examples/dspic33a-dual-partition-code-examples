@@ -25,7 +25,7 @@ A console-based demo demonstrating how to use Dual Partition mode on the dsPIC33
 * A USB-Type C cable (for powering the board)
 
 ## Setup and Operation
-See [dspic33AK512MPS512 Dual Partition Demo](dspic33ak512mps512_dual_partition_demo/), the associated [README.md](dspic33ak512mps512_dual_partition_demo/README.md) file, and project labs for details on the project setup and operation.
+See [dsPIC33AK512MPS512 Dual Partition Demo](dspic33ak512mps512_dual_partition_demo/), the associated [README.md](dspic33ak512mps512_dual_partition_demo/README.md) file, and project labs for details on the project setup and operation.
 
 
 
