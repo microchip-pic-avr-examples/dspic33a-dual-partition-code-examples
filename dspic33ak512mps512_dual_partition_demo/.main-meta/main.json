@@ -4,7 +4,7 @@
    "content":{
       "metaDataVersion":"1.3.0",
       "name":"com.microchip.mplabx.project.dspic33ak512mps512-dual-partition-demo",
-      "version":"1.0.0",
+      "version":"1.0.1",
       "displayName":"dsPIC33AK512MPS512 Dual Partition Demo",
       "projectName":"dspic33ak512mps512-dual-partition-demo",
       "shortDescription":"This MPLAB® X IDE example demonstrates how to utilize the Dual Partition mode on the dsPIC33AK512MPS512 in order to program two independent applications into the device.",
