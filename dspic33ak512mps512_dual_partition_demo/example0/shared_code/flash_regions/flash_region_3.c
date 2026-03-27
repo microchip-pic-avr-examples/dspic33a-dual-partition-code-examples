@@ -32,39 +32,13 @@
 #define FLASH_REGION_3_TEST_CODE_ADDRESS 0xC02000
 
 static bool LockOptionSet(uint32_t option);
-static bool EraseTestArea(void);
 
 struct FLASH_REGION flashRegion3 = {
-    .lockOptionSet = LockOptionSet,
-    .eraseTestArea = EraseTestArea
+    .lockOptionSet = LockOptionSet
 };
 
 static bool LockOptionSet(uint32_t option)
 {
     PR3LOCK = (FLASH_PROTECTION_KEY | option);
     return ((PR3LOCK == option) && (PR3CTRLbits.RTYPE != FLASH_PROTECTION_TYPE_IRT));
-}
-
-static bool EraseTestArea(void)
-{
-    static const uint32_t flashRegion3TestCode __attribute__((address(FLASH_REGION_3_TEST_CODE_ADDRESS), space(prog), keep)) = 0x01234567UL;
-    
-    bool pageErased = false;
-
-    const uint32_t* panelVal = &flashRegion3TestCode;
-    uint32_t physicalEraseAddress = FLASH_ErasePageAddressGet(FLASH_REGION_3_TEST_CODE_ADDRESS);
-    
-    /* Attempt to make the region writable. */
-    PR3CTRLbits.WR = 1;  
-       
-    /* Erase the page. */
-    (void)FLASH_PageErase(physicalEraseAddress, FLASH_UNLOCK_KEY);
-    
-    /* Test to see if the memory was erased. */
-    if (*panelVal == BLANK_INSTRUCTION)
-    {
-        pageErased = true;
-    }
-    
-    return pageErased;
 }

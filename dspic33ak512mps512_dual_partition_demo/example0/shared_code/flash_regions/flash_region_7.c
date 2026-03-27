@@ -32,11 +32,9 @@
 #define FLASH_REGION_7_TEST_CODE_ADDRESS 0x80C000U
 
 static bool LockOptionSet(uint32_t option);
-static bool EraseTestArea(void);
 
 struct FLASH_REGION flashRegion7 = {
-    .lockOptionSet = LockOptionSet,
-    .eraseTestArea = EraseTestArea
+    .lockOptionSet = LockOptionSet
 };
 
 static bool LockOptionSet(uint32_t option)
@@ -45,31 +43,3 @@ static bool LockOptionSet(uint32_t option)
     return ((PR7LOCK == option) && (PR7CTRLbits.RTYPE != FLASH_PROTECTION_TYPE_IRT));
 }
 
-static bool EraseTestArea(void)
-{
-    /* Create a test block within the flash region for testing permissions.  The 
-    * configuration bits define this region to be from 0x80C000-0x80CFFF. We don't
-    * want any code to link into this range if we successfully erase this range so
-    * we also block out that entire block of memory. */
-    static const volatile uint32_t flashRegion7TestCodeBuffer[FLASH_ERASE_PAGE_SIZE_IN_INSTRUCTIONS - 1U] __attribute__((address(FLASH_REGION_7_TEST_CODE_ADDRESS + 4U), space(prog), keep, used)) = {0};
-    static const uint32_t flashRegion7TestCode __attribute__((address(FLASH_REGION_7_TEST_CODE_ADDRESS), space(prog), keep)) = 0x89ABCDEFUL;
-    
-    bool pageErased = false;
-    
-    const uint32_t* panelVal = &flashRegion7TestCode;
-    uint32_t physicalEraseAddress = FLASH_ErasePageAddressGet(FLASH_REGION_7_TEST_CODE_ADDRESS);
-    
-    /* Attempt to make the region writable. */
-    PR7CTRLbits.WR = 1;  
-       
-    /* Erase the page. */
-    (void)FLASH_PageErase(physicalEraseAddress, FLASH_UNLOCK_KEY);
-    
-    /* Test to see if the memory was erased. */
-    if (*panelVal == BLANK_INSTRUCTION)
-    {
-        pageErased = true;
-    }
-    
-    return pageErased;
-}

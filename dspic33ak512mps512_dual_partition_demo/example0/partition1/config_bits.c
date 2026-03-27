@@ -110,10 +110,10 @@
 #pragma config FPR1CTRL_PSEL = PANEL1    //Partition Select->Panel 1
 
 // FPR1ST
-#pragma config FPR1ST_START = 0x3    //Region start address bits.
+#pragma config FPR1ST_START = 0x10    //Region start address bits.
 
 // FPR1END
-#pragma config FPR1END_END = 0x3    //Region end address bits.
+#pragma config FPR1END_END = 0x11    //Region end address bits.
 
 /* -----------------------------------------------------------------------------
  * Flash Protection Region 2
@@ -191,10 +191,10 @@
 #pragma config FPR4CTRL_PSEL = PANEL2    //Partition Select->PANEL2
 
 // FPR4ST
-#pragma config FPR4ST_START = 0x3    //Region start address bits.
+#pragma config FPR4ST_START = 0x10    //Region start address bits.
 
 // FPR4END
-#pragma config FPR4END_END = 0x3    //Region end address bits.
+#pragma config FPR4END_END = 0x11    //Region end address bits.
 
 /* -----------------------------------------------------------------------------
  * Flash Protection Region 5

@@ -32,11 +32,9 @@
 #define FLASH_REGION_5_TEST_CODE_ADDRESS 0xC05000
 
 static bool LockOptionSet(uint32_t option);
-static bool EraseTestArea(void);
 
 struct FLASH_REGION flashRegion5 = {
-    .lockOptionSet = LockOptionSet,
-    .eraseTestArea = EraseTestArea
+    .lockOptionSet = LockOptionSet
 };
 
 static bool LockOptionSet(uint32_t option)
@@ -45,36 +43,3 @@ static bool LockOptionSet(uint32_t option)
     return ((PR5LOCK == option) && (PR5CTRLbits.RTYPE != FLASH_PROTECTION_TYPE_IRT));
 }
 
-static bool EraseTestArea(void)
-{
-    bool pageErased = false;
-    
-    /* cppcheck-suppress misra-c2012-11.4
-     * 
-     *  (Rule 11.4) ADVISORY: A conversion should not be performed between a
-     *  pointer to object and an integer type
-     * 
-     *  This is required.  The code needs to know the device address where the
-     *  test code is located.  Since this is a fixed address and not a variable,
-     *  it requires a cast.  The alternative would be to create a dummy variable
-     *  at the address of the test code and point to that instead.  This
-     *  alternative would take a custom addressed variable and corresponding
-     *  considerations in the linker file.
-     */
-    const uint32_t* panelVal = (uint32_t *)(FLASH_REGION_5_TEST_CODE_ADDRESS);
-    uint32_t physicalEraseAddress = FLASH_ErasePageAddressGet(FLASH_REGION_5_TEST_CODE_ADDRESS);
-    
-    /* Attempt to make the region writable. */
-    PR5CTRLbits.WR = 1;  
-       
-    /* Erase the page. */
-    (void)FLASH_PageErase(physicalEraseAddress, FLASH_UNLOCK_KEY);
-    
-    /* Test to see if the memory was erased. */
-    if (*panelVal == BLANK_INSTRUCTION)
-    {
-        pageErased = true;
-    }
-    
-    return pageErased;
-}

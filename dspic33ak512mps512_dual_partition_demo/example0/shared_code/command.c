@@ -85,7 +85,12 @@ static bool GetRegionSelection(uint8_t* regionNum);
 static void UnlockRegion(void);
 static void LockRegion(void);
 static void LockRegionUntilReset(void);
-static void EraseTestArea(void);
+static void EraseActiveTestArea(void);
+static void EraseInactiveTestArea(void);
+static void PrintActiveTestArea(void);
+static void PrintInactiveTestArea(void);
+static void WriteActiveTestArea(void);
+static void WriteInactiveTestArea(void);
 static void BulkErase(void);
 static void SequenceNumberUpdate(void);
 static void BootSwapRequested(void);
@@ -132,14 +137,34 @@ void COMMAND_Process(char command)
             break;
             
         case 'e':
-            EraseTestArea();
+            EraseActiveTestArea();
+            break;
+            
+        case 'E':
+            EraseInactiveTestArea();
+            break;
+            
+        case 'p':
+            PrintActiveTestArea();
+            break;
+            
+        case 'P':
+            PrintInactiveTestArea();
+            break;
+            
+        case 'w':
+            WriteActiveTestArea();
+            break;
+            
+        case 'W':
+            WriteInactiveTestArea();
             break;
             
         case 'c':
             ImageCopy();
             break;
         
-        case 'p':
+        case 't':
             BulkErase();
             break;
             
@@ -165,6 +190,84 @@ void COMMAND_Process(char command)
             (void)printf("Invalid request.\r\n");
             break;
     }
+}
+
+static void PrintRegion(uint32_t address)
+{
+    uint8_t data[128];
+    
+    memcpy(data, (void*)address, sizeof(data));
+      
+    for(int i=0; i<sizeof(data); i++){
+        if((i % 16) == 0)
+        {
+            (void)printf("\r\n  %08lX: ", (unsigned long)(address + i));
+        }
+        
+        printf(" %02lX ", (unsigned long)data[i]);
+    }
+    
+    (void)printf("\r\n\r\n");
+}
+
+static void PrintActiveTestArea(void)
+{
+    PrintRegion(0x810000);
+}
+
+static void PrintInactiveTestArea(void)
+{
+    PrintRegion(0xC10000);
+}
+
+static void WriteActiveTestArea(void)
+{
+    flash_data_t data[4] = { 0x00112233, 0x44556677, 0x8899AABB, 0xCCDDEEFF };
+    
+    FLASH_WordWrite(0x810000, data, FLASH_UNLOCK_KEY);
+    
+    PrintRegion(0x810000);
+}
+
+static void WriteInactiveTestArea(void)
+{
+    flash_data_t data[4] = { 0x00112233, 0x44556677, 0x8899AABB, 0xCCDDEEFF };
+    
+    FLASH_WordWrite(0xC10000, data, FLASH_UNLOCK_KEY);
+    
+    PrintRegion(0xC10000);
+}
+
+/**
+ * @ingroup  command.c
+ * @brief    Erases the test area in the specified flash region. Used to test
+ *           the flash region protection settings. Use the unlock('u'), lock('l')
+ *           and lock until reset('x') commands to test out various situations
+ *           regarding the flash region lock.
+ * 
+ * @param    none
+ * @return   none
+ */
+static void EraseActiveTestArea(void)
+{
+    FLASH_PageErase(0x810000, FLASH_UNLOCK_KEY);
+    PrintRegion(0x810000);
+}
+
+/**
+ * @ingroup  command.c
+ * @brief    Erases the test area in the specified flash region. Used to test
+ *           the flash region protection settings. Use the unlock('u'), lock('l')
+ *           and lock until reset('x') commands to test out various situations
+ *           regarding the flash region lock.
+ * 
+ * @param    none
+ * @return   none
+ */
+static void EraseInactiveTestArea(void)
+{
+    FLASH_PageErase(0xC10000, FLASH_UNLOCK_KEY);
+    PrintRegion(0xC10000);
 }
 
 static bool RegionNumIsValid(uint8_t regionNum)
@@ -282,35 +385,7 @@ static void LockRegionUntilReset(void)
     }
 }
 
-/**
- * @ingroup  command.c
- * @brief    Erases the test area in the specified flash region. Used to test
- *           the flash region protection settings. Use the unlock('u'), lock('l')
- *           and lock until reset('x') commands to test out various situations
- *           regarding the flash region lock.
- * 
- * @param    none
- * @return   none
- */
-static void EraseTestArea(void)
-{
-    uint8_t regionNum = 0;
-    bool validInput = GetRegionSelection(&regionNum);
 
-    if(validInput)
-    {
-        struct FLASH_REGION * const region = flashRegion[regionNum];
-        
-        if (region->eraseTestArea())
-        {
-            (void)printf("Page from flash region %i successfully erased.\r\n\r\n", regionNum);
-        } 
-        else
-        {
-            (void)printf("Page from flash region %i failed erase.\r\n\r\n", regionNum);
-        }
-    }
-}
 
 /**
  * @ingroup  command.c

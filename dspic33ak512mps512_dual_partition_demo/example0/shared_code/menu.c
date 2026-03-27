@@ -167,11 +167,15 @@ void MENU_Print(void)
     (void)printf("    'x' : Set a flash protection region to LOCKED UNTIL RESET\r\n");
     (void)printf("\r\n");
 
-    (void)printf("  Copy & Erase Options:\r\n");
+    (void)printf("  Erase Options:\r\n");
     (void)printf("  -------------------------------------------\r\n");
-    (void)printf("    'c' : Copy the current partition code to the inactive partition\r\n");
-    (void)printf("    'e' : Erase a PAGE in a flash protection region\r\n");
-    (void)printf("    'p' : Erase the inactive PARTITION\r\n");
+    (void)printf("    'e' : Erase the test area of the active partition\r\n");
+    (void)printf("    'E' : Erase the test area of the inactive partition\r\n");
+    (void)printf("    'p' : Print the test area of the active partition\r\n");
+    (void)printf("    'P' : Print the test area of the inactive partition\r\n");
+    (void)printf("    'w' : Write the test area of the active partition\r\n");
+    (void)printf("    'W' : Write the test area of the inactive partition\r\n");
+    (void)printf("    't' : Inactive partition erase\r\n");
     (void)printf("\r\n");
 
     (void)printf("  Bootswap, Debug, & Reset Options:\r\n");

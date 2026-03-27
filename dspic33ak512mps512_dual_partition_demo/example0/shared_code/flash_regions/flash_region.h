@@ -35,7 +35,6 @@
 
 struct FLASH_REGION {
     bool (* const lockOptionSet)(uint32_t option);
-    bool (* const eraseTestArea)(void);
 };
 
 #endif
