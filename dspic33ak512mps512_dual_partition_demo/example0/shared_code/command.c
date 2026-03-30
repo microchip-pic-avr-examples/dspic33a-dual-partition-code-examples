@@ -34,6 +34,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stddef.h>
+
 #include "xc.h"
 #include "bsp/led0.h"
 #include "bsp/led7.h"
@@ -211,6 +213,12 @@ static struct COMMAND commands[] = {
         .description = "Write test data to the test area of the inactive partition",
         .execute = WriteInactiveTestArea
     },
+    {
+        .type = TYPE_COMMAND,
+        .code = 'T',
+        .description = "Bulk erase the inactive partition",
+        .execute = BulkErase
+    },
     
     // Bootswap, Debug, & Reset Options
     {
@@ -307,21 +315,6 @@ void MENU_Print(void)
         }
     }
     
-//    (void)printf("  Erase Options:\r\n");
-//    (void)printf("  -------------------------------------------\r\n");
-//    (void)printf("    'e' : Erase the test area of the active partition\r\n");
-//    (void)printf("    'p' : Print the test area of the active partition\r\n");
-//    (void)printf("    'w' : Write the test area of the active partition\r\n");
-//    (void)printf("    'c' : Read the config bits active partition\r\n");
-
-//    (void)printf("    'E' : Erase the test area of the inactive partition\r\n");
-//    (void)printf("    'P' : Print the test area of the inactive partition\r\n");
-//    (void)printf("    'W' : Write the test area of the inactive partition\r\n");
-//    (void)printf("    'C' : Read the config the inactive partition\r\n");
-
-//    (void)printf("    't' : Inactive partition erase\r\n");
-//    (void)printf("\r\n");
-    
     (void)printf("\r\n");
     (void)printf("Command: ");
 }
@@ -346,95 +339,25 @@ static void PrintRegion(uint32_t address)
 
 void COMMAND_Process(void)
 {    
+    struct COMMAND* command = NULL;
+
     MENU_Print();
 
-    char command = SCAN_Char(true);
+    char command_code = SCAN_Char(true);
 
     (void)printf("\r\n\r\n");
 
-    switch(command)
-    {
-        case 's':
-            SequenceNumberUpdate();
+    for(size_t i=0; i<(sizeof(commands)/sizeof(struct COMMAND)); i++) {
+        if(commands[i].code == command_code) {
+            command = &commands[i];
             break;
-        
-        case 'a':
-            (void)FLASH_PageErase(ACTIVE_SEQUENCE_NUMBER_PAGE, FLASH_UNLOCK_KEY);
-            break;
-        
-        case 'i':
-            (void)FLASH_PageErase(INACTIVE_SEQUENCE_NUMBER_PAGE, FLASH_UNLOCK_KEY);
-            break;
-
-        case 'u':
-            UnlockRegion();
-            break;
-            
-        case 'l':
-            LockRegion();
-            break;
-            
-        case 'x':
-            LockRegionUntilReset();
-            break;
-            
-        case 'e':
-            EraseActiveTestArea();
-            break;
-            
-        case 'E':
-            EraseInactiveTestArea();
-            break;
-            
-        case 'p':
-            PrintActiveTestArea();
-            break;
-            
-        case 'P':
-            PrintInactiveTestArea();
-            break;
-            
-        case 'w':
-            WriteActiveTestArea();
-            break;
-            
-        case 'W':
-            WriteInactiveTestArea();
-            break;
-            
-        case 'c':
-            PrintRegion(0x7F3000);
-            break;
-            
-        case 'C':
-            PrintRegion(0x7FB000);
-            break;
-                    
-        case 't':
-            BulkErase();
-            break;
-            
-        case 'b':
-            BootSwapRequested();
-            break;
-                    
-        case 'q':
-            /* Wait until all UART data is transmitted before triggering the
-             * breakpoint to prevent garbled terminal data. */
-            while(UART1_IsTxDone() == false)
-            {
-            }
-            
-            BreakpointExample();
-            break;
-            
-        case 'r':
-            RESET_DeviceReset();
-            break;
-
-        default:
-            (void)printf("Invalid request.\r\n");
-            break;
+        }
+    }
+    
+    if(command == NULL) {
+        (void)printf("Invalid request.\r\n");
+    } else {
+        command->execute();
     }
 }
 
