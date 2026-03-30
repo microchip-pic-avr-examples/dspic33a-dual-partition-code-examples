@@ -38,7 +38,7 @@
 // FCP
 #pragma config FCP_CP = OFF    //Memory protection enable bit.->Memory protection is disabled.
 #pragma config FCP_CRC = OFF    //CRC enable bit.->CRC is disabled.
-#pragma config FCP_WPUCA = OFF    //User configuration areas write protection enable bits.->Protection is disabled.
+#pragma config FCP_WPUCA = ACTIVE    //User configuration areas write protection enable bits.->Protection is disabled.
 
 // FICD
 #pragma config FICD_JTAGEN = OFF    //JTAG enable bit.->JTAG is disabled.
@@ -92,7 +92,7 @@
  * Flash Protection Region 1
  * -----------------------------------------------------------------------------
  * PANEL: 1
- * ADDRESS RANGE: 0x803000-0x803FFF
+ * ADDRESS RANGE: 0x810000-0x810FFF
  * TYPE: FIRMWARE
  * PERMISSIONS ON RESET: 
  *     Execution: Enabled
@@ -173,7 +173,7 @@
  * Flash Protection Region 4
  * -----------------------------------------------------------------------------
  * PANEL: 2
- * ADDRESS RANGE: 0x803000-0x803FFF
+ * ADDRESS RANGE: 0x810000-0x810FFF
  * TYPE: FIRMWARE
  * PERMISSIONS ON RESET: 
  *     Execution: Enabled

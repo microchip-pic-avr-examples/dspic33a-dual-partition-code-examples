@@ -108,6 +108,25 @@ static struct FLASH_REGION * const flashRegion[] =
     &flashRegion7,
 };
 
+
+static void PrintRegion(uint32_t address)
+{
+    uint8_t data[128];
+    
+    memcpy(data, (void*)address, sizeof(data));
+      
+    for(int i=0; i<sizeof(data); i++){
+        if((i % 16) == 0)
+        {
+            (void)printf("\r\n  %08lX: ", (unsigned long)(address + i));
+        }
+        
+        printf(" %02lX ", (unsigned long)data[i]);
+    }
+    
+    (void)printf("\r\n\r\n");
+}
+
 void COMMAND_Process(char command)
 {    
     switch(command)
@@ -161,9 +180,13 @@ void COMMAND_Process(char command)
             break;
             
         case 'c':
-            ImageCopy();
+            PrintRegion(0x7F3000);
             break;
-        
+            
+        case 'C':
+            PrintRegion(0x7FB000);
+            break;
+                    
         case 't':
             BulkErase();
             break;
@@ -192,23 +215,6 @@ void COMMAND_Process(char command)
     }
 }
 
-static void PrintRegion(uint32_t address)
-{
-    uint8_t data[128];
-    
-    memcpy(data, (void*)address, sizeof(data));
-      
-    for(int i=0; i<sizeof(data); i++){
-        if((i % 16) == 0)
-        {
-            (void)printf("\r\n  %08lX: ", (unsigned long)(address + i));
-        }
-        
-        printf(" %02lX ", (unsigned long)data[i]);
-    }
-    
-    (void)printf("\r\n\r\n");
-}
 
 static void PrintActiveTestArea(void)
 {
@@ -250,8 +256,8 @@ static void WriteInactiveTestArea(void)
  */
 static void EraseActiveTestArea(void)
 {
-    FLASH_PageErase(0x810000, FLASH_UNLOCK_KEY);
-    PrintRegion(0x810000);
+    FLASH_PageErase(0x7F3000, FLASH_UNLOCK_KEY);
+    PrintRegion(0x7F3000);
 }
 
 /**
@@ -266,8 +272,8 @@ static void EraseActiveTestArea(void)
  */
 static void EraseInactiveTestArea(void)
 {
-    FLASH_PageErase(0xC10000, FLASH_UNLOCK_KEY);
-    PrintRegion(0xC10000);
+    FLASH_PageErase(0x7FB000, FLASH_UNLOCK_KEY);
+    PrintRegion(0x7FB000);
 }
 
 static bool RegionNumIsValid(uint8_t regionNum)

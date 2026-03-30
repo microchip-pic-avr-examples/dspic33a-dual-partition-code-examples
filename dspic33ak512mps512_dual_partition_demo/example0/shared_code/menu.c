@@ -175,6 +175,8 @@ void MENU_Print(void)
     (void)printf("    'P' : Print the test area of the inactive partition\r\n");
     (void)printf("    'w' : Write the test area of the active partition\r\n");
     (void)printf("    'W' : Write the test area of the inactive partition\r\n");
+    (void)printf("    'c' : Read the config bits active partition\r\n");
+    (void)printf("    'C' : Read the config the inactive partition\r\n");
     (void)printf("    't' : Inactive partition erase\r\n");
     (void)printf("\r\n");
 
