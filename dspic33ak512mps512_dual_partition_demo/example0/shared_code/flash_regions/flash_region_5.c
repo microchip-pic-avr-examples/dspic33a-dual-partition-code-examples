@@ -32,14 +32,29 @@
 #define FLASH_REGION_5_TEST_CODE_ADDRESS 0xC05000
 
 static bool LockOptionSet(uint32_t option);
+static bool IsWriteEnabled(void);
+static enum PANEL PanelGet(void);
 
 struct FLASH_REGION flashRegion5 = {
-    .lockOptionSet = LockOptionSet
+    .lockOptionSet = LockOptionSet,
+    .isWriteEnabled = IsWriteEnabled,
+    .panelGet = PanelGet
 };
 
 static bool LockOptionSet(uint32_t option)
 {
     PR5LOCK = (FLASH_PROTECTION_KEY | option);
     return ((PR5LOCK == option) && (PR5CTRLbits.RTYPE != FLASH_PROTECTION_TYPE_IRT));
+}
+
+
+static bool IsWriteEnabled(void)
+{
+    return PR5CTRLbits.WR == 1;
+}
+
+static enum PANEL PanelGet(void)
+{
+    return PR5CTRLbits.PSEL;
 }
 

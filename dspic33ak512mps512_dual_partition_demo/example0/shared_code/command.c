@@ -278,6 +278,47 @@ static void SequenceNumberInactiveErase(void)
     (void)FLASH_PageErase(INACTIVE_SEQUENCE_NUMBER_PAGE, FLASH_UNLOCK_KEY);
 }
 
+static char panelStrings[4][5] = {
+    "DATA",
+    "1   ",
+    "   2",
+    "BOTH"
+};
+
+static char* PartitionStringGet(struct FLASH_REGION * const region){
+    enum PANEL panel = region->panelGet();
+    char* result;
+    
+    if(panel == PANEL_BOTH){
+        result = "BOTH    ";
+    } else if(((panel == PANEL_1) && (PARTITION_ActiveGet() == 1)) ||
+       ((panel == PANEL_2) && (PARTITION_ActiveGet() == 2))) {
+        result = "ACTIVE  ";
+    } else {
+        result = "INACTIVE";
+    }
+    
+    return result;    
+}
+
+static void FlashRegionInfoPrint(void)
+{
+    (void)printf("  Flash Regions\r\n");
+    (void)printf("  -------------------------------------------\r\n");
+    (void)printf("  NUMBER | PANEL | PARTITION | WRITE ENABLED \r\n");
+    
+    for(size_t i=0; i<(sizeof(flashRegion)/sizeof(struct FLASH_REGION * const)); i++) {
+        struct FLASH_REGION * const region = flashRegion[i];
+        
+        (void)printf("   "); //text alignment
+        (void)printf("%u        ", i);  //Number
+        (void)printf("%s    ", panelStrings[region->panelGet()]); //Panel
+        (void)printf("%s   ", PartitionStringGet(region));
+        (void)printf("%s", region->isWriteEnabled() ? "true" : "false");
+        (void)printf("\r\n");
+    }
+}
+
 /**
  * @ingroup  menu.c
  * @brief    Prints the menu options.
@@ -301,6 +342,10 @@ void MENU_Print(void)
     (void)printf("\r\n");
     
     SequenceInfoPrint();
+    
+    (void)printf("\r\n");
+    
+    FlashRegionInfoPrint();
     
     for(size_t i=0; i<(sizeof(commands)/sizeof(struct COMMAND)); i++)
     {

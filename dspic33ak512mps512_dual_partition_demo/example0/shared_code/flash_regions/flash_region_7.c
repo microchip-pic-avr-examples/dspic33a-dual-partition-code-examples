@@ -32,14 +32,28 @@
 #define FLASH_REGION_7_TEST_CODE_ADDRESS 0x80C000U
 
 static bool LockOptionSet(uint32_t option);
+static bool IsWriteEnabled(void);
+static enum PANEL PanelGet(void);
 
 struct FLASH_REGION flashRegion7 = {
-    .lockOptionSet = LockOptionSet
+    .lockOptionSet = LockOptionSet,
+    .isWriteEnabled = IsWriteEnabled,
+    .panelGet = PanelGet
 };
 
 static bool LockOptionSet(uint32_t option)
 {
     PR7LOCK = (FLASH_PROTECTION_KEY | option);
     return ((PR7LOCK == option) && (PR7CTRLbits.RTYPE != FLASH_PROTECTION_TYPE_IRT));
+}
+
+static bool IsWriteEnabled(void)
+{
+    return PR7CTRLbits.WR == 1;
+}
+
+static enum PANEL PanelGet(void)
+{
+    return PR7CTRLbits.PSEL;
 }
 

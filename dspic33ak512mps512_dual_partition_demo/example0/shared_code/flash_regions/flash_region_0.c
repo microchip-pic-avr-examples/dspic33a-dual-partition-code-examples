@@ -59,9 +59,13 @@
 #define FLASH_REGION_0_TEST_CODE_ADDRESS 0x802000
 
 static bool LockOptionSet(uint32_t option);
+static bool IsWriteEnabled(void);
+static enum PANEL PanelGet(void);
 
 struct FLASH_REGION flashRegion0 = {
-    .lockOptionSet = LockOptionSet
+    .lockOptionSet = LockOptionSet,
+    .isWriteEnabled = IsWriteEnabled,
+    .panelGet = PanelGet
 };
 
 /**
@@ -76,4 +80,14 @@ static bool LockOptionSet(uint32_t option)
 {
     PR0LOCK = (FLASH_PROTECTION_KEY | option);
     return ((PR0LOCK == option) && (PR0CTRLbits.RTYPE != FLASH_PROTECTION_TYPE_IRT));
+}
+
+static bool IsWriteEnabled(void)
+{
+    return PR0CTRLbits.WR == 0;
+}
+
+static enum PANEL PanelGet(void)
+{
+    return PR0CTRLbits.PSEL;
 }
