@@ -57,14 +57,14 @@
 #include "flash_regions/flash_region_6.h"
 #include "flash_regions/flash_region_7.h"
 
-#define INACTIVE_SEQUENCE_NUMBER_ADDRESS 0xC3FFF0UL
-#define INACTIVE_SEQUENCE_NUMBER_PAGE 0xC3F000UL
+#define ACTIVE_PARTITION_BASE_ADDRESS 0x800000UL
+#define INACTIVE_PARTITION_BASE_ADDRESS 0xC00000UL
 
 #define ACTIVE_SEQUENCE_NUMBER_ADDRESS 0x83FFF0UL
 #define ACTIVE_SEQUENCE_NUMBER_PAGE 0x83F000UL
 
-#define ACTIVE_PARTITION_BASE_ADDRESS 0x800000UL
-#define INACTIVE_PARTITION_BASE_ADDRESS 0xC00000UL
+#define INACTIVE_SEQUENCE_NUMBER_ADDRESS 0xC3FFF0UL
+#define INACTIVE_SEQUENCE_NUMBER_PAGE 0xC3F000UL
 
 #define DEMO_PARTITION_SIZE 0x10000UL
 
@@ -94,7 +94,7 @@ static void WriteInactiveTestArea(void);
 static void BulkErase(void);
 static void SequenceNumberUpdate(void);
 static void BootSwapRequested(void);
-static void ImageCopy(void);
+void MENU_Print(void);
 
 static struct FLASH_REGION * const flashRegion[] = 
 {
@@ -127,8 +127,14 @@ static void PrintRegion(uint32_t address)
     (void)printf("\r\n\r\n");
 }
 
-void COMMAND_Process(char command)
+void COMMAND_Process(void)
 {    
+    MENU_Print();
+
+    char command = SCAN_Char(true);
+
+    (void)printf("\r\n\r\n");
+
     switch(command)
     {
         case 's':
@@ -471,58 +477,145 @@ static void BootSwapRequested(void)
 }
 
 /**
- * @ingroup  command.c
- * @brief    Copies the code from the active partition to the inactive partition.
- *           This could be needed if some of the tests are run that erase part
- *           of the code in the inactive partition.
+ * @ingroup  menu.c
+ * @brief    Determines if the specified sequence number is valid or not.
  * 
- *           NOTE: This does not copy the entire code memory.  It copies a 
- *           DEMO_PARTITION_SIZE size block.
- * @param    none
+ * @param    *sequenceCode - pointer to 128-bit sequence code.
+ * @return   bool - true if sequence code is valid
+ */
+static bool SequenceCodeIsValid(const uint32_t *sequenceCode)
+{
+    bool codeIsValid = true;
+    
+    uint16_t BTSEQn = sequenceCode[0] & 0xFFFU;
+    uint16_t IBTSEQn = (sequenceCode[0] >> 12) & 0xFFFU;
+    
+    if( (BTSEQn + IBTSEQn) != 0xFFFU){
+        codeIsValid = false;
+    }
+    
+    if((sequenceCode[0] >> 24) != 0U){
+        codeIsValid = false;
+    }
+    
+    if((sequenceCode[1] != 0U) ||
+       (sequenceCode[2] != 0U) ||
+       (sequenceCode[3] != 0U)){
+        codeIsValid = false;
+    }
+    
+    return codeIsValid;
+}
+
+/**
+ * @ingroup  menu.c
+ * @brief    Prints sequence number analysis of the specified address
+ * 
+ * @param    address - the address of the sequence number to analyze
  * @return   none
  */
-static void ImageCopy(void)
+static void SequenceCodePrint(uint32_t address)
 {
+    uint32_t sequenceCode[4];
+    
     /* cppcheck-suppress misra-c2012-11.6
      * 
      *  (Rule 11.6) REQUIRED: Required: A cast shall not be performed between 
      *  pointer to void and an arithmetic type
      * 
-     *  Reasoning: This checks that the active partition and inactive partition
-     *  are not already equal before performing an image copy. Because the 
-     *  address of the inactive partition lives outside of active partition,
-     *  there is no way to create an object at that address to reference so
-     *  an integer address is used for the inactive partition base address.
+     *  Reasoning: This copies the sequence code value of the requested 
+     *  partition into the sequenceCode buffer. Because the address may be the 
+     *  inactive partition and therefore lives outside of active partition, 
+     *  there is no way to create an object at that address to reference so an 
+     *  integer address is used for the address.
      */
-    if(memcmp((void*)ACTIVE_PARTITION_BASE_ADDRESS, (void*)INACTIVE_PARTITION_BASE_ADDRESS, DEMO_PARTITION_SIZE) != 0)
-    {
-        (void)printf("Copying demo code into inactive partition.\r\n\r\n");
-        
-        /* Erase the inactive partition just in case. */
-        for(uint32_t offset = 0; offset < DEMO_PARTITION_SIZE; offset += FLASH_ERASE_PAGE_SIZE_IN_BYTES)
-        {
-            (void)FLASH_PageErase(INACTIVE_PARTITION_BASE_ADDRESS + offset, FLASH_UNLOCK_KEY);
-        }
-
-        /* Copy the demo code over from the active partition to the inactive partition. */
-        for(uint32_t offset = 0; offset < DEMO_PARTITION_SIZE; offset += FLASH_WRITE_SIZE_IN_BYTES)
-        {
-            //Copy the active partition into the inactive partition
-            
-            /* cppcheck-suppress misra-c2012-11.4
-            * 
-            *  (Rule 11.4) ADVISORY: A conversion should not be performed between a
-            *  pointer to object and an integer type
-            * 
-            *  This is required.  The code needs to know the device address
-            *  where the active partition is located.  Since this is a fixed 
-            *  address and not a variable, it requires a cast.  The alternative 
-            *  would be to create a dummy variable at the address of the active 
-            *  partition start and point to that instead.  This alternative 
-            *  would take a custom addressed variable and corresponding
-            *  considerations in the linker file.
-            */
-            FLASH_WordWrite(INACTIVE_PARTITION_BASE_ADDRESS + offset, (flash_data_t *)(ACTIVE_PARTITION_BASE_ADDRESS + offset), FLASH_UNLOCK_KEY);
-        }
+    memcpy(sequenceCode, (void*) address, sizeof(sequenceCode));
+    
+    (void)printf(" @%08X [%08X, %08X, %08X, %08X]", (unsigned int)address, (unsigned int)sequenceCode[0], (unsigned int)sequenceCode[1], (unsigned int)sequenceCode[2], (unsigned int)sequenceCode[3]);
+    
+    if(SequenceCodeIsValid(sequenceCode) == false){
+        (void)printf(" -- INVALID!!");
     }
+    
+    (void)printf("\r\n");
+}
+
+/**
+ * @ingroup  menu.c
+ * @brief    Prints out the sequence number information for both partitions.
+ *           Indicates which partition is currently active and if the sequence
+ *           numbers of each partition are valid.
+ * 
+ * @param    none
+ * @return   none
+ */
+static void SequenceInfoPrint(void)
+{
+    (void)printf("  Active Partition  (%u) : ", PARTITION_ActiveGet());
+    SequenceCodePrint(ACTIVE_SEQUENCE_NUMBER_ADDRESS);
+    (void)printf("  Inactive Partition(%u) : ", PARTITION_InactiveGet());
+    SequenceCodePrint(INACTIVE_SEQUENCE_NUMBER_ADDRESS);
+}
+
+/**
+ * @ingroup  menu.c
+ * @brief    Prints the menu options.
+ * 
+ * @param    none
+ * @return   none
+ */
+void MENU_Print(void)
+{
+    (void)printf("\r\n");
+    (void)printf("\r\n");
+    (void)printf("=============================================\r\n");
+    (void)printf("Dual Partition Demo\r\n");
+    (void)printf("=============================================\r\n");
+
+    RESET_PrintResetSources();
+    
+    /* Clear all sources */
+    RCON = 0;
+    
+    (void)printf("\r\n");
+    
+    SequenceInfoPrint();
+    
+    (void)printf("\r\n");
+    
+    (void)printf("  Sequence Number Options:\r\n");
+    (void)printf("  -------------------------------------------\r\n");
+    (void)printf("    's' : Write the sequence number of the inactive partition\r\n");
+    (void)printf("    'a' : Erase active partition sequence number\r\n");
+    (void)printf("    'i' : Erase inactive partition sequence number\r\n");
+    (void)printf("\r\n");
+
+    (void)printf("  Flash Panel Lock & Unlock Options:\r\n");
+    (void)printf("  -------------------------------------------\r\n");
+    (void)printf("    'u' : Set a flash protection region to UNLOCKED\r\n");
+    (void)printf("    'l' : Set a flash protection region to LOCKED\r\n");
+    (void)printf("    'x' : Set a flash protection region to LOCKED UNTIL RESET\r\n");
+    (void)printf("\r\n");
+
+    (void)printf("  Erase Options:\r\n");
+    (void)printf("  -------------------------------------------\r\n");
+    (void)printf("    'e' : Erase the test area of the active partition\r\n");
+    (void)printf("    'E' : Erase the test area of the inactive partition\r\n");
+    (void)printf("    'p' : Print the test area of the active partition\r\n");
+    (void)printf("    'P' : Print the test area of the inactive partition\r\n");
+    (void)printf("    'w' : Write the test area of the active partition\r\n");
+    (void)printf("    'W' : Write the test area of the inactive partition\r\n");
+    (void)printf("    'c' : Read the config bits active partition\r\n");
+    (void)printf("    'C' : Read the config the inactive partition\r\n");
+    (void)printf("    't' : Inactive partition erase\r\n");
+    (void)printf("\r\n");
+
+    (void)printf("  Bootswap, Debug, & Reset Options:\r\n");
+    (void)printf("  -------------------------------------------\r\n");
+    (void)printf("    'b' : BOOTSWP\r\n");
+    (void)printf("    'q' : run the breakpoint function\r\n");
+    (void)printf("    'r' : Reset\r\n");
+    (void)printf("\r\n");
+    
+    (void)printf("Command: ");
 }

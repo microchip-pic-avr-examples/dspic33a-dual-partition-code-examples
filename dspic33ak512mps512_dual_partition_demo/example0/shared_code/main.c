@@ -40,12 +40,9 @@
 #include "bsp/led0.h"
 #include "bsp/led7.h"
 
-#include "mcc_generated_files/flash/flash_types.h"
-#include "mcc_generated_files/uart/uart1.h"
 #include "mcc_generated_files/system/system.h"
 #include "partition.h"
 #include "scan.h"
-#include "menu.h"
 #include "command.h"
 
 static void BlinkAlive(void);
@@ -57,18 +54,10 @@ int main(void)
 
     /* Request LED to blink every 500ms. */
     (void)TASK_Request(BlinkAlive, 500);
-      
-    MENU_Print();
     
     while(1)
     {   
-        char command = SCAN_Char(true);
-        
-        (void)printf("\r\n\r\n");
-
-        COMMAND_Process(command);
-        
-        MENU_Print();
+        COMMAND_Process();
     }
 }
 

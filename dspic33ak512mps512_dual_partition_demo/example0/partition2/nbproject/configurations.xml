@@ -146,7 +146,6 @@
       <itemPath>../shared_code/reset.c</itemPath>
       <itemPath>../shared_code/partition.c</itemPath>
       <itemPath>../shared_code/scan.c</itemPath>
-      <itemPath>../shared_code/menu.c</itemPath>
       <itemPath>../shared_code/command.c</itemPath>
     </logicalFolder>
   </logicalFolder>
