@@ -96,12 +96,11 @@ static void PrintInactiveTestArea(void);
 static void WriteActiveTestArea(void);
 static void WriteInactiveTestArea(void);
 static void BulkErase(void);
-static void SequenceNumberUpdate(void);
 static void BootSwapRequested(void);
 static void SequenceInfoPrint(void);
-static void SequenceNumberActiveErase(void);
-static void SequenceNumberInactiveErase(void);
 static void BreakpointDemo(void);
+static void SequenceNumberActiveUpdate(void);
+static void SequenceNumberInactiveUpdate(void);
 
 void MENU_Print(void);
 
@@ -117,31 +116,7 @@ struct COMMAND {
     void (*execute)(void);
 };
 
-static struct COMMAND commands[] = {
-    // Sequence Number Options
-    {
-        .type = TYPE_GROUP,
-        .description = "Sequence Number Options",
-    },
-    {
-        .type = TYPE_COMMAND,
-        .code = 's',
-        .description = "Write the sequence number of the inactive partition",
-        .execute = SequenceNumberUpdate
-    },
-    {
-        .type = TYPE_COMMAND,
-        .code = 'a',
-        .description = "Erase active partition sequence number",
-        .execute = SequenceNumberActiveErase
-    },
-    {
-        .type = TYPE_COMMAND,
-        .code = 'i',
-        .description = "Erase inactive partition sequence number",
-        .execute = SequenceNumberInactiveErase
-    },
-    
+static struct COMMAND commands[] = {    
     // Flash Panel Lock & Unlock Options
     {
         .type = TYPE_GROUP,
@@ -169,7 +144,7 @@ static struct COMMAND commands[] = {
     // Dual Partition Flash Protection Regions: Active Panel
     {
         .type = TYPE_GROUP,
-        .description = "Active Partition - Dual Partition Flash Protection Regions (0x810000)",
+        .description = "Active Partition",
     },
     {
         .type = TYPE_COMMAND,
@@ -188,6 +163,12 @@ static struct COMMAND commands[] = {
         .code = 'w',
         .description = "Write test data to the test area of the active partition",
         .execute = WriteActiveTestArea
+    },
+    {
+        .type = TYPE_COMMAND,
+        .code = 's',
+        .description = "Write the sequence number of the active partition",
+        .execute = SequenceNumberActiveUpdate
     },
     
     // Dual Partition Flash Protection Regions: Inactive Panel
@@ -218,6 +199,12 @@ static struct COMMAND commands[] = {
         .code = 'T',
         .description = "Bulk erase the inactive partition",
         .execute = BulkErase
+    },
+    {
+        .type = TYPE_COMMAND,
+        .code = 'S',
+        .description = "Write the sequence number of the inactive partition",
+        .execute = SequenceNumberInactiveUpdate
     },
     
     // Bootswap, Debug, & Reset Options
@@ -266,16 +253,6 @@ static void BreakpointDemo(void)
     }
 
     BreakpointExample();
-}
-
-static void SequenceNumberActiveErase(void)
-{
-    (void)FLASH_PageErase(ACTIVE_SEQUENCE_NUMBER_PAGE, FLASH_UNLOCK_KEY);
-}
-
-static void SequenceNumberInactiveErase(void)
-{
-    (void)FLASH_PageErase(INACTIVE_SEQUENCE_NUMBER_PAGE, FLASH_UNLOCK_KEY);
 }
 
 static char panelStrings[4][5] = {
@@ -641,7 +618,7 @@ static void BulkErase(void)
  * @param    none
  * @return   none
  */
-static void SequenceNumberUpdate(void)
+static void SequenceNumberUpdate(flash_adr_t page, flash_adr_t address)
 {
     uint32_t sequenceNumber = 0;
 
@@ -653,13 +630,23 @@ static void SequenceNumberUpdate(void)
 
         sequenceNumberArray[0] = sequenceNumber;
 
-        (void)FLASH_PageErase(INACTIVE_SEQUENCE_NUMBER_PAGE, FLASH_UNLOCK_KEY);
-        (void)FLASH_WordWrite(INACTIVE_SEQUENCE_NUMBER_ADDRESS, sequenceNumberArray, FLASH_UNLOCK_KEY);
+        (void)FLASH_PageErase(page, FLASH_UNLOCK_KEY);
+        (void)FLASH_WordWrite(address, sequenceNumberArray, FLASH_UNLOCK_KEY);
     }
     else
     {
         (void)printf("\r\n\r\nSequence number not written\r\n\r\n");
     }
+}
+
+static void SequenceNumberActiveUpdate(void)
+{
+    SequenceNumberUpdate(ACTIVE_SEQUENCE_NUMBER_PAGE, ACTIVE_SEQUENCE_NUMBER_ADDRESS);
+}
+
+static void SequenceNumberInactiveUpdate(void)
+{
+    SequenceNumberUpdate(INACTIVE_SEQUENCE_NUMBER_PAGE, INACTIVE_SEQUENCE_NUMBER_ADDRESS);
 }
 
 /**
