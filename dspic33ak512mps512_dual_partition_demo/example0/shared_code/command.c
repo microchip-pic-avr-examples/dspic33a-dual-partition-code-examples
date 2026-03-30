@@ -569,8 +569,6 @@ static void LockRegionUntilReset(void)
     }
 }
 
-
-
 /**
  * @ingroup  command.c
  * @brief    Issues a bulk/panel/partition erase on the inactive partition.
