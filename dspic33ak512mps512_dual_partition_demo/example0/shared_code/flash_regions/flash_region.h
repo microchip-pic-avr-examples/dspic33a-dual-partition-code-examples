@@ -33,9 +33,17 @@
 
 #define BLANK_INSTRUCTION 0xFFFFFFFFUL
 
+enum PANEL {
+    PANEL_DATA = 0x00,
+    PANEL_1 = 0x01,
+    PANEL_2 = 0x02,
+    PANEL_BOTH = 0x03
+};
+
 struct FLASH_REGION {
     bool (* const lockOptionSet)(uint32_t option);
-    bool (* const eraseTestArea)(void);
+    bool (* const isWriteEnabled)(void);
+    enum PANEL (*const panelGet)(void);
 };
 
 #endif

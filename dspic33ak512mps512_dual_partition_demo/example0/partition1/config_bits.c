@@ -38,7 +38,7 @@
 // FCP
 #pragma config FCP_CP = OFF    //Memory protection enable bit.->Memory protection is disabled.
 #pragma config FCP_CRC = OFF    //CRC enable bit.->CRC is disabled.
-#pragma config FCP_WPUCA = OFF    //User configuration areas write protection enable bits.->Protection is disabled.
+#pragma config FCP_WPUCA = ACTIVE    //User configuration areas write protection enable bits.->Protection is disabled.
 
 // FICD
 #pragma config FICD_JTAGEN = OFF    //JTAG enable bit.->JTAG is disabled.
@@ -92,7 +92,7 @@
  * Flash Protection Region 1
  * -----------------------------------------------------------------------------
  * PANEL: 1
- * ADDRESS RANGE: 0x803000-0x803FFF
+ * ADDRESS RANGE: 0x810000-0x810FFF
  * TYPE: FIRMWARE
  * PERMISSIONS ON RESET: 
  *     Execution: Enabled
@@ -110,10 +110,10 @@
 #pragma config FPR1CTRL_PSEL = PANEL1    //Partition Select->Panel 1
 
 // FPR1ST
-#pragma config FPR1ST_START = 0x3    //Region start address bits.
+#pragma config FPR1ST_START = 0x10    //Region start address bits.
 
 // FPR1END
-#pragma config FPR1END_END = 0x3    //Region end address bits.
+#pragma config FPR1END_END = 0x11    //Region end address bits.
 
 /* -----------------------------------------------------------------------------
  * Flash Protection Region 2
@@ -173,7 +173,7 @@
  * Flash Protection Region 4
  * -----------------------------------------------------------------------------
  * PANEL: 2
- * ADDRESS RANGE: 0x803000-0x803FFF
+ * ADDRESS RANGE: 0x810000-0x810FFF
  * TYPE: FIRMWARE
  * PERMISSIONS ON RESET: 
  *     Execution: Enabled
@@ -191,10 +191,10 @@
 #pragma config FPR4CTRL_PSEL = PANEL2    //Partition Select->PANEL2
 
 // FPR4ST
-#pragma config FPR4ST_START = 0x3    //Region start address bits.
+#pragma config FPR4ST_START = 0x10    //Region start address bits.
 
 // FPR4END
-#pragma config FPR4END_END = 0x3    //Region end address bits.
+#pragma config FPR4END_END = 0x11    //Region end address bits.
 
 /* -----------------------------------------------------------------------------
  * Flash Protection Region 5

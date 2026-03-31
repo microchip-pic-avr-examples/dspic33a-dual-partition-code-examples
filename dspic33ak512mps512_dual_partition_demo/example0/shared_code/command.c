@@ -34,6 +34,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stddef.h>
+
 #include "xc.h"
 #include "bsp/led0.h"
 #include "bsp/led7.h"
@@ -57,20 +59,22 @@
 #include "flash_regions/flash_region_6.h"
 #include "flash_regions/flash_region_7.h"
 
-#define INACTIVE_SEQUENCE_NUMBER_ADDRESS 0xC3FFF0UL
-#define INACTIVE_SEQUENCE_NUMBER_PAGE 0xC3F000UL
+#define ACTIVE_PARTITION_BASE_ADDRESS 0x800000UL
+#define INACTIVE_PARTITION_BASE_ADDRESS 0xC00000UL
 
 #define ACTIVE_SEQUENCE_NUMBER_ADDRESS 0x83FFF0UL
 #define ACTIVE_SEQUENCE_NUMBER_PAGE 0x83F000UL
 
-#define ACTIVE_PARTITION_BASE_ADDRESS 0x800000UL
-#define INACTIVE_PARTITION_BASE_ADDRESS 0xC00000UL
+#define INACTIVE_SEQUENCE_NUMBER_ADDRESS 0xC3FFF0UL
+#define INACTIVE_SEQUENCE_NUMBER_PAGE 0xC3F000UL
 
 #define DEMO_PARTITION_SIZE 0x10000UL
 
 #define FLASH_INSTRUCTION_SIZE_IN_BYTES (4UL)
 #define FLASH_ERASE_PAGE_SIZE_IN_BYTES (FLASH_ERASE_PAGE_SIZE_IN_INSTRUCTIONS * 4UL)
 #define FLASH_WRITE_SIZE_IN_BYTES (4UL * FLASH_INSTRUCTION_SIZE_IN_BYTES)    //4 instructions written at a time
+
+#define PRINT_REGION_SIZE 128
 
 /******************************************************************************/
 /* Extern Function Prototypes                                                 */
@@ -85,11 +89,148 @@ static bool GetRegionSelection(uint8_t* regionNum);
 static void UnlockRegion(void);
 static void LockRegion(void);
 static void LockRegionUntilReset(void);
-static void EraseTestArea(void);
+static void EraseActiveTestArea(void);
+static void EraseInactiveTestArea(void);
+static void PrintActiveTestArea(void);
+static void PrintInactiveTestArea(void);
+static void WriteActiveTestArea(void);
+static void WriteInactiveTestArea(void);
 static void BulkErase(void);
-static void SequenceNumberUpdate(void);
 static void BootSwapRequested(void);
-static void ImageCopy(void);
+static void SequenceInfoPrint(void);
+static void BreakpointDemo(void);
+static void SequenceNumberActiveUpdate(void);
+static void SequenceNumberInactiveUpdate(void);
+
+void MENU_Print(void);
+
+enum TYPE {
+    TYPE_GROUP,
+    TYPE_COMMAND
+};
+
+struct COMMAND {
+    enum TYPE type;
+    char code;
+    char description[100];
+    void (*execute)(void);
+};
+
+static struct COMMAND commands[] = {    
+    // Flash Panel Lock & Unlock Options
+    {
+        .type = TYPE_GROUP,
+        .description = "Flash Panel Lock & Unlock Options",
+    },
+    {
+        .type = TYPE_COMMAND,
+        .code = 'u',
+        .description = "Set a flash protection region to UNLOCKED",
+        .execute = UnlockRegion
+    },
+    {
+        .type = TYPE_COMMAND,
+        .code = 'l',
+        .description = "Set a flash protection region to LOCKED",
+        .execute = LockRegion
+    },
+    {
+        .type = TYPE_COMMAND,
+        .code = 'x',
+        .description = "Set a flash protection region to LOCKED UNTIL RESET",
+        .execute = LockRegionUntilReset
+    },
+    
+    // Dual Partition Flash Protection Regions: Active Panel
+    {
+        .type = TYPE_GROUP,
+        .description = "Active Partition",
+    },
+    {
+        .type = TYPE_COMMAND,
+        .code = 'p',
+        .description = "Print the test area of the active partition",
+        .execute = PrintActiveTestArea
+    },
+    {
+        .type = TYPE_COMMAND,
+        .code = 'e',
+        .description = "Erase the test area of the active partition",
+        .execute = EraseActiveTestArea
+    },
+    {
+        .type = TYPE_COMMAND,
+        .code = 'w',
+        .description = "Write test data to the test area of the active partition",
+        .execute = WriteActiveTestArea
+    },
+    {
+        .type = TYPE_COMMAND,
+        .code = 's',
+        .description = "Write the sequence number of the active partition",
+        .execute = SequenceNumberActiveUpdate
+    },
+    
+    // Dual Partition Flash Protection Regions: Inactive Panel
+    {
+        .type = TYPE_GROUP,
+        .description = "Inactive Partition - Dual Partition Flash Protection Regions (0xC10000)",
+    },
+    {
+        .type = TYPE_COMMAND,
+        .code = 'P',
+        .description = "Print the test area of the inactive partition",
+        .execute = PrintInactiveTestArea
+    },
+    {
+        .type = TYPE_COMMAND,
+        .code = 'E',
+        .description = "Erase the test area of the inactive partition",
+        .execute = EraseInactiveTestArea
+    },
+    {
+        .type = TYPE_COMMAND,
+        .code = 'W',
+        .description = "Write test data to the test area of the inactive partition",
+        .execute = WriteInactiveTestArea
+    },
+    {
+        .type = TYPE_COMMAND,
+        .code = 'T',
+        .description = "Bulk erase the inactive partition",
+        .execute = BulkErase
+    },
+    {
+        .type = TYPE_COMMAND,
+        .code = 'S',
+        .description = "Write the sequence number of the inactive partition",
+        .execute = SequenceNumberInactiveUpdate
+    },
+    
+    // Bootswap, Debug, & Reset Options
+    {
+        .type = TYPE_GROUP,
+        .description = "Bootswap, Debug, & Reset Options",
+    },
+    {
+        .type = TYPE_COMMAND,
+        .code = 'b',
+        .description = "Swap active/inactive partitions: BOOTSWP",
+        .execute = BootSwapRequested
+    },
+    {
+        .type = TYPE_COMMAND,
+        .code = 'q',
+        .description = "Run the breakpoint function",
+        .execute = BreakpointDemo
+    },
+    {
+        .type = TYPE_COMMAND,
+        .code = 'r',
+        .description = "Issue software RESET",
+        .execute = RESET_DeviceReset
+    },
+};
 
 static struct FLASH_REGION * const flashRegion[] = 
 {
@@ -103,68 +244,236 @@ static struct FLASH_REGION * const flashRegion[] =
     &flashRegion7,
 };
 
-void COMMAND_Process(char command)
-{    
-    switch(command)
+static void BreakpointDemo(void)
+{
+    /* Wait until all UART data is transmitted before triggering the
+     * breakpoint to prevent garbled terminal data. */
+    while(UART1_IsTxDone() == false)
     {
-        case 's':
-            SequenceNumberUpdate();
-            break;
-        
-        case 'a':
-            (void)FLASH_PageErase(ACTIVE_SEQUENCE_NUMBER_PAGE, FLASH_UNLOCK_KEY);
-            break;
-        
-        case 'i':
-            (void)FLASH_PageErase(INACTIVE_SEQUENCE_NUMBER_PAGE, FLASH_UNLOCK_KEY);
-            break;
-
-        case 'u':
-            UnlockRegion();
-            break;
-            
-        case 'l':
-            LockRegion();
-            break;
-            
-        case 'x':
-            LockRegionUntilReset();
-            break;
-            
-        case 'e':
-            EraseTestArea();
-            break;
-            
-        case 'c':
-            ImageCopy();
-            break;
-        
-        case 'p':
-            BulkErase();
-            break;
-            
-        case 'b':
-            BootSwapRequested();
-            break;
-                    
-        case 'q':
-            /* Wait until all UART data is transmitted before triggering the
-             * breakpoint to prevent garbled terminal data. */
-            while(UART1_IsTxDone() == false)
-            {
-            }
-            
-            BreakpointExample();
-            break;
-            
-        case 'r':
-            RESET_DeviceReset();
-            break;
-
-        default:
-            (void)printf("Invalid request.\r\n");
-            break;
     }
+
+    BreakpointExample();
+}
+
+static char panelStrings[4][5] = {
+    "DATA",
+    "1   ",
+    "   2",
+    "BOTH"
+};
+
+static char* PartitionStringGet(struct FLASH_REGION * const region){
+    enum PANEL panel = region->panelGet();
+    char* result;
+    
+    if(panel == PANEL_BOTH){
+        result = "BOTH    ";
+    } else if(((panel == PANEL_1) && (PARTITION_ActiveGet() == 1)) ||
+       ((panel == PANEL_2) && (PARTITION_ActiveGet() == 2))) {
+        result = "ACTIVE  ";
+    } else {
+        result = "INACTIVE";
+    }
+    
+    return result;    
+}
+
+static void FlashRegionInfoPrint(void)
+{
+    (void)printf("  Flash Regions\r\n");
+    (void)printf("  -------------------------------------------\r\n");
+    (void)printf("  NUMBER | PANEL | PARTITION | WRITE ENABLED \r\n");
+    
+    for(size_t i=0; i<(sizeof(flashRegion)/sizeof(struct FLASH_REGION * const)); i++) {
+        struct FLASH_REGION * const region = flashRegion[i];
+        
+        (void)printf("   "); //text alignment
+        (void)printf("%u        ", i);  //Number
+        (void)printf("%s    ", panelStrings[region->panelGet()]); //Panel
+        (void)printf("%s   ", PartitionStringGet(region));
+        (void)printf("%s", region->isWriteEnabled() ? "true" : "false");
+        (void)printf("\r\n");
+    }
+}
+
+/**
+ * @ingroup  menu.c
+ * @brief    Prints the menu options.
+ * 
+ * @param    none
+ * @return   none
+ */
+void MENU_Print(void)
+{
+    (void)printf("\r\n");
+    (void)printf("\r\n");
+    (void)printf("=============================================\r\n");
+    (void)printf("Dual Partition Demo\r\n");
+    (void)printf("=============================================\r\n");
+
+    RESET_PrintResetSources();
+    
+    /* Clear all sources */
+    RCON = 0;
+    
+    (void)printf("\r\n");
+    
+    SequenceInfoPrint();
+    
+    (void)printf("\r\n");
+    
+    FlashRegionInfoPrint();
+    
+    for(size_t i=0; i<(sizeof(commands)/sizeof(struct COMMAND)); i++)
+    {
+        struct COMMAND* command = &commands[i];
+        
+        if(command->type == TYPE_GROUP){
+            (void)printf("\r\n");
+            (void)printf("  %s:\r\n", command->description);
+            (void)printf("  -------------------------------------------\r\n");
+        } else {
+            (void)printf("    '%c' : %s\r\n", command->code, command->description);
+        }
+    }
+    
+    (void)printf("\r\n");
+    (void)printf("Command: ");
+}
+
+static void PrintRegion(uint32_t address)
+{
+    uint8_t data[PRINT_REGION_SIZE];
+    
+    memcpy(data, (void*)address, sizeof(data));
+      
+    for(int i=0; i<sizeof(data); i++){
+        if((i % 16) == 0)
+        {
+            (void)printf("\r\n  %08lX: ", (unsigned long)(address + i));
+        }
+        
+        printf(" %02lX ", (unsigned long)data[i]);
+    }
+    
+    (void)printf("\r\n\r\n");
+}
+
+void COMMAND_Process(void)
+{    
+    struct COMMAND* command = NULL;
+
+    MENU_Print();
+
+    char command_code = SCAN_Char(true);
+
+    (void)printf("\r\n\r\n");
+
+    for(size_t i=0; i<(sizeof(commands)/sizeof(struct COMMAND)); i++) {
+        if(commands[i].code == command_code) {
+            command = &commands[i];
+            break;
+        }
+    }
+    
+    if(command == NULL) {
+        (void)printf("Invalid request.\r\n");
+    } else {
+        command->execute();
+    }
+}
+
+
+static void PrintActiveTestArea(void)
+{
+    PrintRegion(0x810000);
+}
+
+static void PrintInactiveTestArea(void)
+{
+    PrintRegion(0xC10000);
+}
+
+static void WriteActiveTestArea(void)
+{
+    flash_data_t data[PRINT_REGION_SIZE/4] = {
+        0x00010203, 0x04050607, 0x08090A0B, 0x0C0D0E0F,
+        0x10111213, 0x14151617, 0x18191A1B, 0x1C1D1E1F,
+        0x20212223, 0x24252627, 0x28292A2B, 0x2C2D2E2F,
+        0x30313233, 0x34353637, 0x38393A3B, 0x3C3D3E3F,
+        0x40414243, 0x44454647, 0x48494A4B, 0x4C4D4E4F,
+        0x50515253, 0x54555657, 0x58595A5B, 0x5C5D5E5F,
+        0x60616263, 0x64656667, 0x68696A6B, 0x6C6D6E6F,
+        0x70717273, 0x74757677, 0x78797A7B, 0x7C7D7E7F,
+    };
+        
+    FLASH_WordWrite(0x810000, &data[0], FLASH_UNLOCK_KEY);
+    FLASH_WordWrite(0x810010, &data[4], FLASH_UNLOCK_KEY);
+    FLASH_WordWrite(0x810020, &data[8], FLASH_UNLOCK_KEY);
+    FLASH_WordWrite(0x810030, &data[12], FLASH_UNLOCK_KEY);
+    FLASH_WordWrite(0x810040, &data[16], FLASH_UNLOCK_KEY);
+    FLASH_WordWrite(0x810050, &data[20], FLASH_UNLOCK_KEY);
+    FLASH_WordWrite(0x810060, &data[24], FLASH_UNLOCK_KEY);
+    FLASH_WordWrite(0x810070, &data[28], FLASH_UNLOCK_KEY);
+    
+    PrintRegion(0x810000);
+}
+
+static void WriteInactiveTestArea(void)
+{    
+    flash_data_t data[PRINT_REGION_SIZE/4] = {
+        0xFCFDFEFF, 0xF8F9FAFB, 0xF4F5F6F7, 0xF0F1F2F3,
+        0xECEDEEEF, 0xE8E9EAEB, 0xE4E5E6E7, 0xE0E1E2E3,
+        0xDCDDDEDF, 0xD8D9DADB, 0xD4D5D6D7, 0xD0D1D2D3,
+        0xCCCDCECF, 0xC8C9CACB, 0xC4C5C6C7, 0xC0C1C2C3,
+        0xBDBDBEBF, 0xB8B9BABB, 0xB4B5B6B7, 0xB0B1B2B3,
+        0xADADAEAF, 0xA8A9AAAB, 0xA4A5A6A7, 0xA0A1A2A3,
+        0x9D9D9E9F, 0x98999A9B, 0x94959697, 0x90919293,
+        0x8C8D8E8F, 0x88898A8B, 0x84858687, 0x80818283,
+    };
+        
+    FLASH_WordWrite(0xC10000, &data[0], FLASH_UNLOCK_KEY);
+    FLASH_WordWrite(0xC10010, &data[4], FLASH_UNLOCK_KEY);
+    FLASH_WordWrite(0xC10020, &data[8], FLASH_UNLOCK_KEY);
+    FLASH_WordWrite(0xC10030, &data[12], FLASH_UNLOCK_KEY);
+    FLASH_WordWrite(0xC10040, &data[16], FLASH_UNLOCK_KEY);
+    FLASH_WordWrite(0xC10050, &data[20], FLASH_UNLOCK_KEY);
+    FLASH_WordWrite(0xC10060, &data[24], FLASH_UNLOCK_KEY);
+    FLASH_WordWrite(0xC10070, &data[28], FLASH_UNLOCK_KEY);
+    
+    PrintRegion(0xC10000);
+}
+
+/**
+ * @ingroup  command.c
+ * @brief    Erases the test area in the specified flash region. Used to test
+ *           the flash region protection settings. Use the unlock('u'), lock('l')
+ *           and lock until reset('x') commands to test out various situations
+ *           regarding the flash region lock.
+ * 
+ * @param    none
+ * @return   none
+ */
+static void EraseActiveTestArea(void)
+{
+    FLASH_PageErase(0x810000, FLASH_UNLOCK_KEY);
+    PrintRegion(0x810000);
+}
+
+/**
+ * @ingroup  command.c
+ * @brief    Erases the test area in the specified flash region. Used to test
+ *           the flash region protection settings. Use the unlock('u'), lock('l')
+ *           and lock until reset('x') commands to test out various situations
+ *           regarding the flash region lock.
+ * 
+ * @param    none
+ * @return   none
+ */
+static void EraseInactiveTestArea(void)
+{
+    FLASH_PageErase(0xC10000, FLASH_UNLOCK_KEY);
+    PrintRegion(0xC10000);
 }
 
 static bool RegionNumIsValid(uint8_t regionNum)
@@ -284,36 +593,6 @@ static void LockRegionUntilReset(void)
 
 /**
  * @ingroup  command.c
- * @brief    Erases the test area in the specified flash region. Used to test
- *           the flash region protection settings. Use the unlock('u'), lock('l')
- *           and lock until reset('x') commands to test out various situations
- *           regarding the flash region lock.
- * 
- * @param    none
- * @return   none
- */
-static void EraseTestArea(void)
-{
-    uint8_t regionNum = 0;
-    bool validInput = GetRegionSelection(&regionNum);
-
-    if(validInput)
-    {
-        struct FLASH_REGION * const region = flashRegion[regionNum];
-        
-        if (region->eraseTestArea())
-        {
-            (void)printf("Page from flash region %i successfully erased.\r\n\r\n", regionNum);
-        } 
-        else
-        {
-            (void)printf("Page from flash region %i failed erase.\r\n\r\n", regionNum);
-        }
-    }
-}
-
-/**
- * @ingroup  command.c
  * @brief    Issues a bulk/panel/partition erase on the inactive partition.
  * @param    none
  * @return   none
@@ -339,7 +618,7 @@ static void BulkErase(void)
  * @param    none
  * @return   none
  */
-static void SequenceNumberUpdate(void)
+static void SequenceNumberUpdate(flash_adr_t page, flash_adr_t address)
 {
     uint32_t sequenceNumber = 0;
 
@@ -351,13 +630,23 @@ static void SequenceNumberUpdate(void)
 
         sequenceNumberArray[0] = sequenceNumber;
 
-        (void)FLASH_PageErase(INACTIVE_SEQUENCE_NUMBER_PAGE, FLASH_UNLOCK_KEY);
-        (void)FLASH_WordWrite(INACTIVE_SEQUENCE_NUMBER_ADDRESS, sequenceNumberArray, FLASH_UNLOCK_KEY);
+        (void)FLASH_PageErase(page, FLASH_UNLOCK_KEY);
+        (void)FLASH_WordWrite(address, sequenceNumberArray, FLASH_UNLOCK_KEY);
     }
     else
     {
         (void)printf("\r\n\r\nSequence number not written\r\n\r\n");
     }
+}
+
+static void SequenceNumberActiveUpdate(void)
+{
+    SequenceNumberUpdate(ACTIVE_SEQUENCE_NUMBER_PAGE, ACTIVE_SEQUENCE_NUMBER_ADDRESS);
+}
+
+static void SequenceNumberInactiveUpdate(void)
+{
+    SequenceNumberUpdate(INACTIVE_SEQUENCE_NUMBER_PAGE, INACTIVE_SEQUENCE_NUMBER_ADDRESS);
 }
 
 /**
@@ -390,58 +679,82 @@ static void BootSwapRequested(void)
 }
 
 /**
- * @ingroup  command.c
- * @brief    Copies the code from the active partition to the inactive partition.
- *           This could be needed if some of the tests are run that erase part
- *           of the code in the inactive partition.
+ * @ingroup  menu.c
+ * @brief    Determines if the specified sequence number is valid or not.
  * 
- *           NOTE: This does not copy the entire code memory.  It copies a 
- *           DEMO_PARTITION_SIZE size block.
- * @param    none
+ * @param    *sequenceCode - pointer to 128-bit sequence code.
+ * @return   bool - true if sequence code is valid
+ */
+static bool SequenceCodeIsValid(const uint32_t *sequenceCode)
+{
+    bool codeIsValid = true;
+    
+    uint16_t BTSEQn = sequenceCode[0] & 0xFFFU;
+    uint16_t IBTSEQn = (sequenceCode[0] >> 12) & 0xFFFU;
+    
+    if( (BTSEQn + IBTSEQn) != 0xFFFU){
+        codeIsValid = false;
+    }
+    
+    if((sequenceCode[0] >> 24) != 0U){
+        codeIsValid = false;
+    }
+    
+    if((sequenceCode[1] != 0U) ||
+       (sequenceCode[2] != 0U) ||
+       (sequenceCode[3] != 0U)){
+        codeIsValid = false;
+    }
+    
+    return codeIsValid;
+}
+
+/**
+ * @ingroup  menu.c
+ * @brief    Prints sequence number analysis of the specified address
+ * 
+ * @param    address - the address of the sequence number to analyze
  * @return   none
  */
-static void ImageCopy(void)
+static void SequenceCodePrint(uint32_t address)
 {
+    uint32_t sequenceCode[4];
+    
     /* cppcheck-suppress misra-c2012-11.6
      * 
      *  (Rule 11.6) REQUIRED: Required: A cast shall not be performed between 
      *  pointer to void and an arithmetic type
      * 
-     *  Reasoning: This checks that the active partition and inactive partition
-     *  are not already equal before performing an image copy. Because the 
-     *  address of the inactive partition lives outside of active partition,
-     *  there is no way to create an object at that address to reference so
-     *  an integer address is used for the inactive partition base address.
+     *  Reasoning: This copies the sequence code value of the requested 
+     *  partition into the sequenceCode buffer. Because the address may be the 
+     *  inactive partition and therefore lives outside of active partition, 
+     *  there is no way to create an object at that address to reference so an 
+     *  integer address is used for the address.
      */
-    if(memcmp((void*)ACTIVE_PARTITION_BASE_ADDRESS, (void*)INACTIVE_PARTITION_BASE_ADDRESS, DEMO_PARTITION_SIZE) != 0)
-    {
-        (void)printf("Copying demo code into inactive partition.\r\n\r\n");
-        
-        /* Erase the inactive partition just in case. */
-        for(uint32_t offset = 0; offset < DEMO_PARTITION_SIZE; offset += FLASH_ERASE_PAGE_SIZE_IN_BYTES)
-        {
-            (void)FLASH_PageErase(INACTIVE_PARTITION_BASE_ADDRESS + offset, FLASH_UNLOCK_KEY);
-        }
-
-        /* Copy the demo code over from the active partition to the inactive partition. */
-        for(uint32_t offset = 0; offset < DEMO_PARTITION_SIZE; offset += FLASH_WRITE_SIZE_IN_BYTES)
-        {
-            //Copy the active partition into the inactive partition
-            
-            /* cppcheck-suppress misra-c2012-11.4
-            * 
-            *  (Rule 11.4) ADVISORY: A conversion should not be performed between a
-            *  pointer to object and an integer type
-            * 
-            *  This is required.  The code needs to know the device address
-            *  where the active partition is located.  Since this is a fixed 
-            *  address and not a variable, it requires a cast.  The alternative 
-            *  would be to create a dummy variable at the address of the active 
-            *  partition start and point to that instead.  This alternative 
-            *  would take a custom addressed variable and corresponding
-            *  considerations in the linker file.
-            */
-            FLASH_WordWrite(INACTIVE_PARTITION_BASE_ADDRESS + offset, (flash_data_t *)(ACTIVE_PARTITION_BASE_ADDRESS + offset), FLASH_UNLOCK_KEY);
-        }
+    memcpy(sequenceCode, (void*) address, sizeof(sequenceCode));
+    
+    (void)printf(" @%08X [%08X, %08X, %08X, %08X]", (unsigned int)address, (unsigned int)sequenceCode[0], (unsigned int)sequenceCode[1], (unsigned int)sequenceCode[2], (unsigned int)sequenceCode[3]);
+    
+    if(SequenceCodeIsValid(sequenceCode) == false){
+        (void)printf(" -- INVALID!!");
     }
+    
+    (void)printf("\r\n");
+}
+
+/**
+ * @ingroup  menu.c
+ * @brief    Prints out the sequence number information for both partitions.
+ *           Indicates which partition is currently active and if the sequence
+ *           numbers of each partition are valid.
+ * 
+ * @param    none
+ * @return   none
+ */
+static void SequenceInfoPrint(void)
+{
+    (void)printf("  Active Partition   (Panel %u) : ", PARTITION_ActiveGet());
+    SequenceCodePrint(ACTIVE_SEQUENCE_NUMBER_ADDRESS);
+    (void)printf("  Inactive Partition (Panel %u) : ", PARTITION_InactiveGet());
+    SequenceCodePrint(INACTIVE_SEQUENCE_NUMBER_ADDRESS);
 }

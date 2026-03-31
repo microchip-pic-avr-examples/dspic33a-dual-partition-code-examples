@@ -32,11 +32,13 @@
 #define FLASH_REGION_6_TEST_CODE_ADDRESS 0xC06000
 
 static bool LockOptionSet(uint32_t option);
-static bool EraseTestArea(void);
+static bool IsWriteEnabled(void);
+static enum PANEL PanelGet(void);
 
 struct FLASH_REGION flashRegion6 = {
     .lockOptionSet = LockOptionSet,
-    .eraseTestArea = EraseTestArea
+    .isWriteEnabled = IsWriteEnabled,
+    .panelGet = PanelGet
 };
 
 static bool LockOptionSet(uint32_t option)
@@ -45,26 +47,13 @@ static bool LockOptionSet(uint32_t option)
     return ((PR6LOCK == option) && (PR6CTRLbits.RTYPE != FLASH_PROTECTION_TYPE_IRT));
 }
 
-static bool EraseTestArea(void)
+
+static bool IsWriteEnabled(void)
 {
-    bool pageErased = false;
-    
-    static const uint32_t flashRegion6TestCode __attribute__((address(FLASH_REGION_6_TEST_CODE_ADDRESS), space(prog), keep)) = 0x01234567UL;
-    
-    const uint32_t* panelVal = &flashRegion6TestCode;
-    uint32_t physicalEraseAddress = FLASH_ErasePageAddressGet(FLASH_REGION_6_TEST_CODE_ADDRESS);
-    
-    /* Attempt to make the region writable. */
-    PR6CTRLbits.WR = 1;  
-       
-    /* Erase the page. */
-    (void)FLASH_PageErase(physicalEraseAddress, FLASH_UNLOCK_KEY);
-    
-    /* Test to see if the memory was erased. */
-    if (*panelVal == BLANK_INSTRUCTION)
-    {
-        pageErased = true;
-    }
-    
-    return pageErased;
+    return PR6CTRLbits.WR == 1;
+}
+
+static enum PANEL PanelGet(void)
+{
+    return PR6CTRLbits.PSEL;
 }
