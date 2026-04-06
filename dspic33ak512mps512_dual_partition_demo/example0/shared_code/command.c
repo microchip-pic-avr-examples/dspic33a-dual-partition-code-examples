@@ -81,7 +81,7 @@
 #define SEQINFO_SEQNUM_WIDTH         9U
 #define SEQINFO_INVSEQNUM_WIDTH     17U
 #define SEQINFO_VALID_WIDTH          7U
-#define SEQINFO_ADDRESS_WIDTH        8U
+#define SEQINFO_ADDRESS_WIDTH        17U
 
 struct SEQUENCE_INFO
 {
@@ -807,10 +807,13 @@ static const char* ValidStringGet(bool valid)
 static void SequenceInfoRowPrint(uint8_t panelNumber, const char *stateLabel, uint32_t address)
 {
     struct SEQUENCE_INFO info;
+    char addressString[18];
 
     SequenceInfoGet(address, &info);
 
-    (void)printf("  %-*s | %-*s | %-*.3X | %-*.3X | %-*s | 0x%06lX\r\n",
+    (void)sprintf(addressString, "0x%06lX", (unsigned long)info.address);
+
+    (void)printf("  %-*s | %-*s | %-*.3X | %-*.3X | %-*s | %-*s\r\n",
                  SEQINFO_PARTITION_WIDTH,
                  (panelNumber == 1U) ? "Partition 1" : "Partition 2",
                  SEQINFO_STATE_WIDTH,
@@ -821,7 +824,8 @@ static void SequenceInfoRowPrint(uint8_t panelNumber, const char *stateLabel, ui
                  (unsigned int)info.inverseSequenceNumber,
                  SEQINFO_VALID_WIDTH,
                  ValidStringGet(info.valid),
-                 (unsigned long)info.address);
+                 SEQINFO_ADDRESS_WIDTH,
+                 addressString);
 }
 
 /**
@@ -835,14 +839,14 @@ static void SequenceInfoRowPrint(uint8_t panelNumber, const char *stateLabel, ui
 static void SequenceInfoPrint(void)
 {
     (void)printf("  Sequence Number\r\n");
-    (void)printf("  --------------------------------------------------------------------------------------\r\n");
+    (void)printf("  ------------------------------------------------------------------------------------------------\r\n");
     (void)printf("  %-*s | %-*s | %-*s | %-*s | %-*s | %-*s\r\n",
                  SEQINFO_PARTITION_WIDTH, "Partition Number",
                  SEQINFO_STATE_WIDTH, "Active/Inactive",
                  SEQINFO_SEQNUM_WIDTH, "Seq. Num.",
                  SEQINFO_INVSEQNUM_WIDTH, "Inverse Seq. Num.",
                  SEQINFO_VALID_WIDTH, "Valid",
-                 SEQINFO_ADDRESS_WIDTH, "Address");
+                 SEQINFO_ADDRESS_WIDTH, "Seq. Num. Address");
 
     SequenceInfoSeparatorPrint();
 
@@ -850,6 +854,14 @@ static void SequenceInfoPrint(void)
     SequenceInfoRowPrint(PARTITION_InactiveGet(), "Inactive", INACTIVE_SEQUENCE_NUMBER_ADDRESS);
 }
 
+/**
+ * @ingroup  menu.c
+ * @brief    Prints a specified character a given number of times.
+ *
+ * @param    ch - character to print
+ * @param    count - number of times to print
+ * @return   none
+ */
 static void PrintRepeatedChar(char ch, uint8_t count)
 {
     uint8_t i;
@@ -860,6 +872,13 @@ static void PrintRepeatedChar(char ch, uint8_t count)
     }
 }
 
+/**
+ * @ingroup  menu.c
+ * @brief    Prints a separator row for the sequence number information table.
+ *
+ * @param    none
+ * @return   none
+ */
 static void SequenceInfoSeparatorPrint(void)
 {
     (void)printf("  ");
