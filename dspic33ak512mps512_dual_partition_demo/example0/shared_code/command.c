@@ -804,7 +804,7 @@ static const char* ValidStringGet(bool valid)
  * @param    address - sequence number address
  * @return   none
  */
-static void SequenceInfoRowPrint(uint8_t panelNumber, const char *stateLabel, uint32_t address)
+static void SequenceInfoRowPrint(uint8_t partitionNumber, const char *stateLabel, uint32_t address)
 {
     struct SEQUENCE_INFO info;
     char addressString[18];
@@ -815,7 +815,7 @@ static void SequenceInfoRowPrint(uint8_t panelNumber, const char *stateLabel, ui
 
     (void)printf("  %-*s | %-*s | %-*.3X | %-*.3X | %-*s | %-*s\r\n",
                  SEQINFO_PARTITION_WIDTH,
-                 (panelNumber == 1U) ? "Partition 1" : "Partition 2",
+                 (partitionNumber == 1U) ? "Partition 1" : "Partition 2",
                  SEQINFO_STATE_WIDTH,
                  stateLabel,
                  SEQINFO_SEQNUM_WIDTH,
