@@ -48,53 +48,54 @@
 #include "flash_regions/flash_region_6.h"
 #include "flash_regions/flash_region_7.h"
 
-#define FLASH_REGION_NUMBER_OF_REGIONS      8U
+#define FLASH_REGION_NUMBER_OF_REGIONS 8U
 
-#define FLASHREGION_NUMBER_WIDTH            6U
-#define FLASHREGION_PARTITION_WIDTH         14U
-#define FLASHREGION_TYPE_WIDTH              11U
-#define FLASHREGION_ADDRESS_WIDTH           19U
-#define FLASHREGION_LOCK_STATUS_WIDTH       11U
-#define FLASHREGION_WRITE_WIDTH             13U
+#define FLASHREGION_NUMBER_WIDTH 6U
+#define FLASHREGION_PARTITION_WIDTH 12U
+#define FLASHREGION_TYPE_WIDTH 11U
+#define FLASHREGION_ADDRESS_WIDTH 19U
+#define FLASHREGION_LOCK_STATUS_WIDTH 11U
+#define FLASHREGION_WRITE_WIDTH 13U
 
-#define FLASH_REGION_LOCK_MASK              0x00000003UL
-#define FLASH_REGION_LOCKED                 0x00000000UL
-#define FLASH_REGION_LOCKED_UNTIL_RESET     0x00000001UL
-#define FLASH_REGION_UNLOCKED               0x00000003UL
+#define FLASH_REGION_LOCK_MASK 0x00000003UL
+#define FLASH_REGION_LOCKED 0x00000000UL
+#define FLASH_REGION_LOCKED_UNTIL_RESET 0x00000001UL
+#define FLASH_REGION_UNLOCKED 0x00000003UL
 
-#define FLASH_ACTIVE_SPACE_BASE             0x800000UL
-#define FLASH_INACTIVE_SPACE_BASE           0xC00000UL
+#define FLASH_ACTIVE_SPACE_BASE 0x800000UL
+#define FLASH_INACTIVE_SPACE_BASE 0xC00000UL
 
 /******************************************************************************/
 /* Private Function Prototypes                                                */
 /******************************************************************************/
-static const char* FlashRegionPartitionStringGet(struct FLASH_REGION * const region);
+static const char *FlashRegionPartitionStringGet(struct FLASH_REGION *const region);
 static void PrintRepeatedChar(char ch, uint8_t count);
 static void FlashRegionSeparatorPrint(void);
 static uint32_t FlashRegionTypeGet(uint8_t regionNumber);
 static uint32_t FlashRegionStartFieldGet(uint8_t regionNumber);
 static uint32_t FlashRegionEndFieldGet(uint8_t regionNumber);
 static uint32_t FlashRegionLockGet(uint8_t regionNumber);
-static const char* FlashRegionTypeStringGet(uint8_t regionNumber);
-static const char* FlashRegionLockStatusStringGet(uint8_t regionNumber);
+static const char *FlashRegionTypeStringGet(uint8_t regionNumber);
+static const char *FlashRegionLockStatusStringGet(uint8_t regionNumber);
 static uint32_t FlashRegionAddressBuild(uint32_t addressField, bool activeSpace);
-static void FlashRegionAddressStringGet(uint32_t addressField,
+static void FlashRegionAddressStringGet(struct FLASH_REGION *const region,
+                                        uint32_t addressField,
                                         char *buffer,
                                         size_t bufferSize);
 
 /******************************************************************************/
 /* Private Data                                                               */
 /******************************************************************************/
-static struct FLASH_REGION * const flashRegion[] =
-{
-    &flashRegion0,
-    &flashRegion1,
-    &flashRegion2,
-    &flashRegion3,
-    &flashRegion4,
-    &flashRegion5,
-    &flashRegion6,
-    &flashRegion7,
+static struct FLASH_REGION *const flashRegion[] =
+    {
+        &flashRegion0,
+        &flashRegion1,
+        &flashRegion2,
+        &flashRegion3,
+        &flashRegion4,
+        &flashRegion5,
+        &flashRegion6,
+        &flashRegion7,
 };
 
 /*
@@ -104,19 +105,19 @@ static struct FLASH_REGION * const flashRegion[] =
  *
  * @param    region - pointer to the flash region struct
  * @return   const char* - flash region partition string
-*/
-static const char* FlashRegionPartitionStringGet(struct FLASH_REGION * const region)
+ */
+static const char *FlashRegionPartitionStringGet(struct FLASH_REGION *const region)
 {
     enum PARTITION partition = region->partitionGet();
 
-    if(partition == PARTITION_BOTH)
+    if (partition == PARTITION_BOTH)
     {
-        return "BOTH (BOTH)";
+        return "BOTH";
     }
-    else if(((partition == PARTITION_1) && (PARTITION_ActiveGet() == 1U)) ||
-            ((partition == PARTITION_2) && (PARTITION_ActiveGet() == 2U)))
+    else if (((partition == PARTITION_1) && (PARTITION_ActiveGet() == 1U)) ||
+             ((partition == PARTITION_2) && (PARTITION_ActiveGet() == 2U)))
     {
-        if(partition == PARTITION_1)
+        if (partition == PARTITION_1)
         {
             return "1 (ACTIVE)";
         }
@@ -127,7 +128,7 @@ static const char* FlashRegionPartitionStringGet(struct FLASH_REGION * const reg
     }
     else
     {
-        if(partition == PARTITION_1)
+        if (partition == PARTITION_1)
         {
             return "1 (INACTIVE)";
         }
@@ -150,7 +151,7 @@ static void PrintRepeatedChar(char ch, uint8_t count)
 {
     uint8_t i;
 
-    for(i = 0U; i < count; i++)
+    for (i = 0U; i < count; i++)
     {
         (void)putchar((int)ch);
     }
@@ -191,17 +192,26 @@ static void FlashRegionSeparatorPrint(void)
  */
 static uint32_t FlashRegionTypeGet(uint8_t regionNumber)
 {
-    switch(regionNumber)
+    switch (regionNumber)
     {
-        case 0U: return PR0CTRLbits.RTYPE;
-        case 1U: return PR1CTRLbits.RTYPE;
-        case 2U: return PR2CTRLbits.RTYPE;
-        case 3U: return PR3CTRLbits.RTYPE;
-        case 4U: return PR4CTRLbits.RTYPE;
-        case 5U: return PR5CTRLbits.RTYPE;
-        case 6U: return PR6CTRLbits.RTYPE;
-        case 7U: return PR7CTRLbits.RTYPE;
-        default: return 0U;
+    case 0U:
+        return PR0CTRLbits.RTYPE;
+    case 1U:
+        return PR1CTRLbits.RTYPE;
+    case 2U:
+        return PR2CTRLbits.RTYPE;
+    case 3U:
+        return PR3CTRLbits.RTYPE;
+    case 4U:
+        return PR4CTRLbits.RTYPE;
+    case 5U:
+        return PR5CTRLbits.RTYPE;
+    case 6U:
+        return PR6CTRLbits.RTYPE;
+    case 7U:
+        return PR7CTRLbits.RTYPE;
+    default:
+        return 0U;
     }
 }
 
@@ -214,17 +224,26 @@ static uint32_t FlashRegionTypeGet(uint8_t regionNumber)
  */
 static uint32_t FlashRegionStartFieldGet(uint8_t regionNumber)
 {
-    switch(regionNumber)
+    switch (regionNumber)
     {
-        case 0U: return PR0STbits.START;
-        case 1U: return PR1STbits.START;
-        case 2U: return PR2STbits.START;
-        case 3U: return PR3STbits.START;
-        case 4U: return PR4STbits.START;
-        case 5U: return PR5STbits.START;
-        case 6U: return PR6STbits.START;
-        case 7U: return PR7STbits.START;
-        default: return 0U;
+    case 0U:
+        return PR0STbits.START;
+    case 1U:
+        return PR1STbits.START;
+    case 2U:
+        return PR2STbits.START;
+    case 3U:
+        return PR3STbits.START;
+    case 4U:
+        return PR4STbits.START;
+    case 5U:
+        return PR5STbits.START;
+    case 6U:
+        return PR6STbits.START;
+    case 7U:
+        return PR7STbits.START;
+    default:
+        return 0U;
     }
 }
 
@@ -237,17 +256,26 @@ static uint32_t FlashRegionStartFieldGet(uint8_t regionNumber)
  */
 static uint32_t FlashRegionEndFieldGet(uint8_t regionNumber)
 {
-    switch(regionNumber)
+    switch (regionNumber)
     {
-        case 0U: return PR0ENDbits.END;
-        case 1U: return PR1ENDbits.END;
-        case 2U: return PR2ENDbits.END;
-        case 3U: return PR3ENDbits.END;
-        case 4U: return PR4ENDbits.END;
-        case 5U: return PR5ENDbits.END;
-        case 6U: return PR6ENDbits.END;
-        case 7U: return PR7ENDbits.END;
-        default: return 0U;
+    case 0U:
+        return PR0ENDbits.END;
+    case 1U:
+        return PR1ENDbits.END;
+    case 2U:
+        return PR2ENDbits.END;
+    case 3U:
+        return PR3ENDbits.END;
+    case 4U:
+        return PR4ENDbits.END;
+    case 5U:
+        return PR5ENDbits.END;
+    case 6U:
+        return PR6ENDbits.END;
+    case 7U:
+        return PR7ENDbits.END;
+    default:
+        return 0U;
     }
 }
 
@@ -260,17 +288,26 @@ static uint32_t FlashRegionEndFieldGet(uint8_t regionNumber)
  */
 static uint32_t FlashRegionLockGet(uint8_t regionNumber)
 {
-    switch(regionNumber)
+    switch (regionNumber)
     {
-        case 0U: return PR0LOCK;
-        case 1U: return PR1LOCK;
-        case 2U: return PR2LOCK;
-        case 3U: return PR3LOCK;
-        case 4U: return PR4LOCK;
-        case 5U: return PR5LOCK;
-        case 6U: return PR6LOCK;
-        case 7U: return PR7LOCK;
-        default: return 0U;
+    case 0U:
+        return PR0LOCK;
+    case 1U:
+        return PR1LOCK;
+    case 2U:
+        return PR2LOCK;
+    case 3U:
+        return PR3LOCK;
+    case 4U:
+        return PR4LOCK;
+    case 5U:
+        return PR5LOCK;
+    case 6U:
+        return PR6LOCK;
+    case 7U:
+        return PR7LOCK;
+    default:
+        return 0U;
     }
 }
 
@@ -281,23 +318,23 @@ static uint32_t FlashRegionLockGet(uint8_t regionNumber)
  * @param    regionNumber - flash region number
  * @return   const char* - region type string
  */
-static const char* FlashRegionTypeStringGet(uint8_t regionNumber)
+static const char *FlashRegionTypeStringGet(uint8_t regionNumber)
 {
     uint32_t regionType = FlashRegionTypeGet(regionNumber);
 
-    switch(regionType)
+    switch (regionType)
     {
-        case 0x1U:
-            return "IRT";
+    case 0x1U:
+        return "IRT";
 
-        case 0x2U:
-            return "OTP";
+    case 0x2U:
+        return "OTP";
 
-        case 0x3U:
-            return "FIRMWARE";
+    case 0x3U:
+        return "FIRMWARE";
 
-        default:
-            return "UNKNOWN";
+    default:
+        return "UNKNOWN";
     }
 }
 
@@ -308,23 +345,23 @@ static const char* FlashRegionTypeStringGet(uint8_t regionNumber)
  * @param    regionNumber - flash region number
  * @return   const char* - lock status string
  */
-static const char* FlashRegionLockStatusStringGet(uint8_t regionNumber)
+static const char *FlashRegionLockStatusStringGet(uint8_t regionNumber)
 {
     uint32_t lockValue = FlashRegionLockGet(regionNumber) & FLASH_REGION_LOCK_MASK;
 
-    switch(lockValue)
+    switch (lockValue)
     {
-        case FLASH_REGION_LOCKED:
-            return "Locked";
+    case FLASH_REGION_LOCKED:
+        return "Locked";
 
-        case FLASH_REGION_LOCKED_UNTIL_RESET:
-            return "Until Reset";
+    case FLASH_REGION_LOCKED_UNTIL_RESET:
+        return "Until Reset";
 
-        case FLASH_REGION_UNLOCKED:
-            return "Unlocked";
+    case FLASH_REGION_UNLOCKED:
+        return "Unlocked";
 
-        default:
-            return "UNKNOWN";
+    default:
+        return "UNKNOWN";
     }
 }
 
@@ -342,7 +379,7 @@ static uint32_t FlashRegionAddressBuild(uint32_t addressField, bool activeSpace)
 
     displayAddress = addressField;
 
-    if(activeSpace)
+    if (activeSpace)
     {
         displayAddress |= FLASH_ACTIVE_SPACE_BASE;
     }
@@ -363,18 +400,43 @@ static uint32_t FlashRegionAddressBuild(uint32_t addressField, bool activeSpace)
  * @param    bufferSize - destination buffer size
  * @return   none
  */
-static void FlashRegionAddressStringGet(uint32_t addressField,
+static void FlashRegionAddressStringGet(struct FLASH_REGION *const region,
+                                        uint32_t addressField,
                                         char *buffer,
                                         size_t bufferSize)
 {
-    uint32_t activeAddress = FlashRegionAddressBuild(addressField, true);
-    uint32_t inactiveAddress = FlashRegionAddressBuild(addressField, false);
+    enum PARTITION partition = region->partitionGet();
 
-    (void)snprintf(buffer,
-                   bufferSize,
-                   "0x%06lX/0x%06lX",
-                   (unsigned long)activeAddress,
-                   (unsigned long)inactiveAddress);
+    if (partition == PARTITION_BOTH)
+    {
+        uint32_t activeAddress = FlashRegionAddressBuild(addressField, true);
+        uint32_t inactiveAddress = FlashRegionAddressBuild(addressField, false);
+
+        (void)snprintf(buffer,
+                       bufferSize,
+                       "0x%06lX/0x%06lX",
+                       (unsigned long)activeAddress,
+                       (unsigned long)inactiveAddress);
+    }
+    else if (((partition == PARTITION_1) && (PARTITION_ActiveGet() == 1U)) ||
+             ((partition == PARTITION_2) && (PARTITION_ActiveGet() == 2U)))
+    {
+        uint32_t activeAddress = FlashRegionAddressBuild(addressField, true);
+
+        (void)snprintf(buffer,
+                       bufferSize,
+                       "0x%06lX",
+                       (unsigned long)activeAddress);
+    }
+    else
+    {
+        uint32_t inactiveAddress = FlashRegionAddressBuild(addressField, false);
+
+        (void)snprintf(buffer,
+                       bufferSize,
+                       "0x%06lX",
+                       (unsigned long)inactiveAddress);
+    }
 }
 
 /**
@@ -393,35 +455,37 @@ void FlashRegionInfoPrint(void)
     char endAddressString[24];
 
     (void)printf("  Flash Regions\r\n");
-    (void)printf("  ----------------------------------------------------------------------------------------------------------------------\r\n");
+    (void)printf("  -------------------------------------------------------------------------------------------------------------\r\n");
     (void)printf("  %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s\r\n",
-             FLASHREGION_NUMBER_WIDTH, "NUMBER",
-             FLASHREGION_PARTITION_WIDTH, "PARTITION",
-             FLASHREGION_TYPE_WIDTH, "REGION TYPE",
-             FLASHREGION_ADDRESS_WIDTH, "START ADDRESS",
-             FLASHREGION_ADDRESS_WIDTH, "END ADDRESS",
-             FLASHREGION_LOCK_STATUS_WIDTH, "LOCK STATUS",
-             FLASHREGION_WRITE_WIDTH, "WRITE ENABLED");
+                 FLASHREGION_NUMBER_WIDTH, "NUMBER",
+                 FLASHREGION_PARTITION_WIDTH, "PARTITION",
+                 FLASHREGION_TYPE_WIDTH, "REGION TYPE",
+                 FLASHREGION_ADDRESS_WIDTH, "START ADDRESS",
+                 FLASHREGION_ADDRESS_WIDTH, "END ADDRESS",
+                 FLASHREGION_LOCK_STATUS_WIDTH, "LOCK STATUS",
+                 FLASHREGION_WRITE_WIDTH, "WRITE ENABLED");
 
     FlashRegionSeparatorPrint();
 
-    for(i = 0U; i < FLASH_REGION_NUMBER_OF_REGIONS; i++)
+    for (i = 0U; i < FLASH_REGION_NUMBER_OF_REGIONS; i++)
     {
-        FlashRegionAddressStringGet(FlashRegionStartFieldGet(i),
+        FlashRegionAddressStringGet(flashRegion[i],
+                                    FlashRegionStartFieldGet(i),
                                     startAddressString,
                                     sizeof(startAddressString));
 
-        FlashRegionAddressStringGet(FlashRegionEndFieldGet(i),
+        FlashRegionAddressStringGet(flashRegion[i],
+                                    FlashRegionEndFieldGet(i),
                                     endAddressString,
                                     sizeof(endAddressString));
 
         (void)printf("  %-*u | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s\r\n",
-             FLASHREGION_NUMBER_WIDTH, (unsigned int)i,
-             FLASHREGION_PARTITION_WIDTH, FlashRegionPartitionStringGet(flashRegion[i]),
-             FLASHREGION_TYPE_WIDTH, FlashRegionTypeStringGet(i),
-             FLASHREGION_ADDRESS_WIDTH, startAddressString,
-             FLASHREGION_ADDRESS_WIDTH, endAddressString,
-             FLASHREGION_LOCK_STATUS_WIDTH, FlashRegionLockStatusStringGet(i),
-             FLASHREGION_WRITE_WIDTH, flashRegion[i]->isWriteEnabled() ? "true" : "false");
+                     FLASHREGION_NUMBER_WIDTH, (unsigned int)i,
+                     FLASHREGION_PARTITION_WIDTH, FlashRegionPartitionStringGet(flashRegion[i]),
+                     FLASHREGION_TYPE_WIDTH, FlashRegionTypeStringGet(i),
+                     FLASHREGION_ADDRESS_WIDTH, startAddressString,
+                     FLASHREGION_ADDRESS_WIDTH, endAddressString,
+                     FLASHREGION_LOCK_STATUS_WIDTH, FlashRegionLockStatusStringGet(i),
+                     FLASHREGION_WRITE_WIDTH, flashRegion[i]->isWriteEnabled() ? "true" : "false");
     }
 }
