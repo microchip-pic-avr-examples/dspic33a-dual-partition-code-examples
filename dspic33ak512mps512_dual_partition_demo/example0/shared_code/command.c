@@ -62,11 +62,11 @@
 #define ACTIVE_PARTITION_BASE_ADDRESS 0x800000UL
 #define INACTIVE_PARTITION_BASE_ADDRESS 0xC00000UL
 
-#define ACTIVE_SEQUENCE_NUMBER_ADDRESS 0x83FFF0UL
-#define ACTIVE_SEQUENCE_NUMBER_PAGE 0x83F000UL
+#define ACTIVE_SEQUENCE_NUMBER_ADDRESS   0x83FFF0UL
+#define ACTIVE_SEQUENCE_NUMBER_PAGE      0x83F000UL
 
 #define INACTIVE_SEQUENCE_NUMBER_ADDRESS 0xC3FFF0UL
-#define INACTIVE_SEQUENCE_NUMBER_PAGE 0xC3F000UL
+#define INACTIVE_SEQUENCE_NUMBER_PAGE    0xC3F000UL
 
 #define DEMO_PARTITION_SIZE 0x10000UL
 
@@ -75,6 +75,21 @@
 #define FLASH_WRITE_SIZE_IN_BYTES (4UL * FLASH_INSTRUCTION_SIZE_IN_BYTES)    //4 instructions written at a time
 
 #define PRINT_REGION_SIZE 128
+
+#define SEQINFO_PARTITION_WIDTH     16U
+#define SEQINFO_STATE_WIDTH         15U
+#define SEQINFO_SEQNUM_WIDTH         9U
+#define SEQINFO_INVSEQNUM_WIDTH     17U
+#define SEQINFO_VALID_WIDTH          7U
+#define SEQINFO_ADDRESS_WIDTH        17U
+
+struct SEQUENCE_INFO
+{
+    uint32_t address;
+    uint16_t sequenceNumber;
+    uint16_t inverseSequenceNumber;
+    bool valid;
+};
 
 /******************************************************************************/
 /* Extern Function Prototypes                                                 */
@@ -101,6 +116,11 @@ static void SequenceInfoPrint(void);
 static void BreakpointDemo(void);
 static void SequenceNumberActiveUpdate(void);
 static void SequenceNumberInactiveUpdate(void);
+static void SequenceInfoGet(uint32_t address, struct SEQUENCE_INFO *info);
+static const char* ValidStringGet(bool valid);
+static void SequenceInfoRowPrint(uint8_t partitionNumber, const char *stateLabel, uint32_t address);
+static void PrintRepeatedChar(char ch, uint8_t count);
+static void SequenceInfoSeparatorPrint(void);
 
 void MENU_Print(void);
 
@@ -639,11 +659,25 @@ static void SequenceNumberUpdate(flash_adr_t page, flash_adr_t address)
     }
 }
 
+/**
+ * @ingroup  menu.c
+ * @brief    Increment and update active partition sequence number
+ *
+ * @param    none
+ * @return   none
+ */
 static void SequenceNumberActiveUpdate(void)
 {
     SequenceNumberUpdate(ACTIVE_SEQUENCE_NUMBER_PAGE, ACTIVE_SEQUENCE_NUMBER_ADDRESS);
 }
 
+/**
+ * @ingroup  menu.c
+ * @brief    Increment and update inactive partition sequence number
+ *
+ * @param    none
+ * @return   none
+ */
 static void SequenceNumberInactiveUpdate(void)
 {
     SequenceNumberUpdate(INACTIVE_SEQUENCE_NUMBER_PAGE, INACTIVE_SEQUENCE_NUMBER_ADDRESS);
@@ -681,80 +715,183 @@ static void BootSwapRequested(void)
 /**
  * @ingroup  menu.c
  * @brief    Determines if the specified sequence number is valid or not.
- * 
+ *
  * @param    *sequenceCode - pointer to 128-bit sequence code.
  * @return   bool - true if sequence code is valid
  */
 static bool SequenceCodeIsValid(const uint32_t *sequenceCode)
 {
     bool codeIsValid = true;
-    
+
     uint16_t BTSEQn = sequenceCode[0] & 0xFFFU;
     uint16_t IBTSEQn = (sequenceCode[0] >> 12) & 0xFFFU;
-    
-    if( (BTSEQn + IBTSEQn) != 0xFFFU){
+
+    if((BTSEQn + IBTSEQn) != 0xFFFU)
+    {
         codeIsValid = false;
     }
-    
-    if((sequenceCode[0] >> 24) != 0U){
+
+    if((sequenceCode[0] >> 24) != 0U)
+    {
         codeIsValid = false;
     }
-    
+
     if((sequenceCode[1] != 0U) ||
        (sequenceCode[2] != 0U) ||
-       (sequenceCode[3] != 0U)){
+       (sequenceCode[3] != 0U))
+    {
         codeIsValid = false;
     }
-    
+
     return codeIsValid;
 }
 
 /**
  * @ingroup  menu.c
- * @brief    Prints sequence number analysis of the specified address
- * 
- * @param    address - the address of the sequence number to analyze
+ * @brief    Reads and decodes the sequence information at the specified address.
+ *
+ * @param    address - address of the sequence number
+ * @param    info - destination structure
  * @return   none
  */
-static void SequenceCodePrint(uint32_t address)
+static void SequenceInfoGet(uint32_t address, struct SEQUENCE_INFO *info)
 {
     uint32_t sequenceCode[4];
-    
+
     /* cppcheck-suppress misra-c2012-11.6
-     * 
-     *  (Rule 11.6) REQUIRED: Required: A cast shall not be performed between 
+     *
+     *  (Rule 11.6) REQUIRED: A cast shall not be performed between
      *  pointer to void and an arithmetic type
-     * 
-     *  Reasoning: This copies the sequence code value of the requested 
-     *  partition into the sequenceCode buffer. Because the address may be the 
-     *  inactive partition and therefore lives outside of active partition, 
-     *  there is no way to create an object at that address to reference so an 
-     *  integer address is used for the address.
+     *
+     *  Reasoning: This copies the sequence code value of the requested
+     *  partition into the sequenceCode buffer. Because the address may live
+     *  outside of active partition, there is no way to create an object at
+     *  that address to reference so an integer address is used.
      */
-    memcpy(sequenceCode, (void*) address, sizeof(sequenceCode));
-    
-    (void)printf(" @%08X [%08X, %08X, %08X, %08X]", (unsigned int)address, (unsigned int)sequenceCode[0], (unsigned int)sequenceCode[1], (unsigned int)sequenceCode[2], (unsigned int)sequenceCode[3]);
-    
-    if(SequenceCodeIsValid(sequenceCode) == false){
-        (void)printf(" -- INVALID!!");
-    }
-    
-    (void)printf("\r\n");
+    memcpy(sequenceCode, (void*)address, sizeof(sequenceCode));
+
+    info->address = address;
+    info->sequenceNumber = (uint16_t)(sequenceCode[0] & 0xFFFU);
+    info->inverseSequenceNumber = (uint16_t)((sequenceCode[0] >> 12) & 0xFFFU);
+    info->valid = SequenceCodeIsValid(sequenceCode);
 }
 
 /**
  * @ingroup  menu.c
- * @brief    Prints out the sequence number information for both partitions.
- *           Indicates which partition is currently active and if the sequence
- *           numbers of each partition are valid.
- * 
+ * @brief    Returns "Valid" or "Invalid" for sequence number display.
+ *
+ * @param    valid - validity state
+ * @return   const char* - validity string
+ */
+static const char* ValidStringGet(bool valid)
+{
+    if(valid)
+    {
+        return "Valid";
+    }
+    else
+    {
+        return "Invalid";
+    }
+}
+
+/**
+ * @ingroup  menu.c
+ * @brief    Prints one row of the sequence number table.
+ *
+ * @param    partitionNumber - current partition number
+ * @param    stateLabel - displayed state label ("Active" or "Inactive")
+ * @param    address - sequence number address
+ * @return   none
+ */
+static void SequenceInfoRowPrint(uint8_t partitionNumber, const char *stateLabel, uint32_t address)
+{
+    struct SEQUENCE_INFO info;
+    char addressString[18];
+
+    SequenceInfoGet(address, &info);
+
+    (void)sprintf(addressString, "0x%06lX", (unsigned long)info.address);
+
+    (void)printf("  %-*s | %-*s | %-*.3X | %-*.3X | %-*s | %-*s\r\n",
+                 SEQINFO_PARTITION_WIDTH,
+                 (partitionNumber == 1U) ? "Partition 1" : "Partition 2",
+                 SEQINFO_STATE_WIDTH,
+                 stateLabel,
+                 SEQINFO_SEQNUM_WIDTH,
+                 (unsigned int)info.sequenceNumber,
+                 SEQINFO_INVSEQNUM_WIDTH,
+                 (unsigned int)info.inverseSequenceNumber,
+                 SEQINFO_VALID_WIDTH,
+                 ValidStringGet(info.valid),
+                 SEQINFO_ADDRESS_WIDTH,
+                 addressString);
+}
+
+/**
+ * @ingroup  menu.c
+ * @brief    Prints sequence number information for active and inactive partitions
+ *           in a table format. 
+ *
  * @param    none
  * @return   none
  */
 static void SequenceInfoPrint(void)
 {
-    (void)printf("  Active Partition   (Panel %u) : ", PARTITION_ActiveGet());
-    SequenceCodePrint(ACTIVE_SEQUENCE_NUMBER_ADDRESS);
-    (void)printf("  Inactive Partition (Panel %u) : ", PARTITION_InactiveGet());
-    SequenceCodePrint(INACTIVE_SEQUENCE_NUMBER_ADDRESS);
+    (void)printf("  Sequence Number\r\n");
+    (void)printf("  ------------------------------------------------------------------------------------------------\r\n");
+    (void)printf("  %-*s | %-*s | %-*s | %-*s | %-*s | %-*s\r\n",
+                 SEQINFO_PARTITION_WIDTH, "Partition Number",
+                 SEQINFO_STATE_WIDTH, "Active/Inactive",
+                 SEQINFO_SEQNUM_WIDTH, "Seq. Num.",
+                 SEQINFO_INVSEQNUM_WIDTH, "Inverse Seq. Num.",
+                 SEQINFO_VALID_WIDTH, "Valid",
+                 SEQINFO_ADDRESS_WIDTH, "Seq. Num. Address");
+
+    SequenceInfoSeparatorPrint();
+
+    SequenceInfoRowPrint(PARTITION_ActiveGet(), "Active", ACTIVE_SEQUENCE_NUMBER_ADDRESS);
+    SequenceInfoRowPrint(PARTITION_InactiveGet(), "Inactive", INACTIVE_SEQUENCE_NUMBER_ADDRESS);
+}
+
+/**
+ * @ingroup  menu.c
+ * @brief    Prints a specified character a given number of times.
+ *
+ * @param    ch - character to print
+ * @param    count - number of times to print
+ * @return   none
+ */
+static void PrintRepeatedChar(char ch, uint8_t count)
+{
+    uint8_t i;
+
+    for(i = 0U; i < count; i++)
+    {
+        (void)putchar((int)ch);
+    }
+}
+
+/**
+ * @ingroup  menu.c
+ * @brief    Prints a separator row for the sequence number information table.
+ *
+ * @param    none
+ * @return   none
+ */
+static void SequenceInfoSeparatorPrint(void)
+{
+    (void)printf("  ");
+    PrintRepeatedChar('-', SEQINFO_PARTITION_WIDTH);
+    (void)printf(" | ");
+    PrintRepeatedChar('-', SEQINFO_STATE_WIDTH);
+    (void)printf(" | ");
+    PrintRepeatedChar('-', SEQINFO_SEQNUM_WIDTH);
+    (void)printf(" | ");
+    PrintRepeatedChar('-', SEQINFO_INVSEQNUM_WIDTH);
+    (void)printf(" | ");
+    PrintRepeatedChar('-', SEQINFO_VALID_WIDTH);
+    (void)printf(" | ");
+    PrintRepeatedChar('-', SEQINFO_ADDRESS_WIDTH);
+    (void)printf("\r\n");
 }
