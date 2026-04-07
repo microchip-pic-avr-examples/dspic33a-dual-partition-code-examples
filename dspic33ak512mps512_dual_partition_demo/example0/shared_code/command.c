@@ -91,10 +91,10 @@ struct COMMAND {
 };
 
 static struct COMMAND commands[] = {    
-    // Flash Panel Lock & Unlock Options
+    // Flash Partition Lock & Unlock Options
     {
         .type = TYPE_GROUP,
-        .description = "Flash Panel Lock & Unlock Options",
+        .description = "Flash Partition Lock & Unlock Options",
     },
     {
         .type = TYPE_COMMAND,
@@ -115,7 +115,7 @@ static struct COMMAND commands[] = {
         .execute = LockRegionUntilReset
     },
     
-    // Dual Partition Flash Protection Regions: Active Panel
+    // Dual Partition Flash Protection Regions: Active Partition
     {
         .type = TYPE_GROUP,
         .description = "Active Partition",
@@ -145,7 +145,7 @@ static struct COMMAND commands[] = {
         .execute = SequenceNumberActiveUpdate
     },
     
-    // Dual Partition Flash Protection Regions: Inactive Panel
+    // Dual Partition Flash Protection Regions: Inactive Partition
     {
         .type = TYPE_GROUP,
         .description = "Inactive Partition - Dual Partition Flash Protection Regions (0xC10000)",

@@ -51,8 +51,7 @@
 #define FLASH_REGION_NUMBER_OF_REGIONS      8U
 
 #define FLASHREGION_NUMBER_WIDTH            6U
-#define FLASHREGION_PANEL_WIDTH             5U
-#define FLASHREGION_PARTITION_WIDTH         9U
+#define FLASHREGION_PARTITION_WIDTH         14U
 #define FLASHREGION_TYPE_WIDTH              11U
 #define FLASHREGION_ADDRESS_WIDTH           19U
 #define FLASHREGION_LOCK_STATUS_WIDTH       11U
@@ -69,7 +68,7 @@
 /******************************************************************************/
 /* Private Function Prototypes                                                */
 /******************************************************************************/
-static char* PartitionStringGet(struct FLASH_REGION * const region);
+static const char* FlashRegionPartitionStringGet(struct FLASH_REGION * const region);
 static void PrintRepeatedChar(char ch, uint8_t count);
 static void FlashRegionSeparatorPrint(void);
 static uint32_t FlashRegionTypeGet(uint8_t regionNumber);
@@ -98,41 +97,45 @@ static struct FLASH_REGION * const flashRegion[] =
     &flashRegion7,
 };
 
-static char panelStrings[4][5] =
-{
-    "DATA",
-    "1   ",
-    "   2",
-    "BOTH"
-};
-
-/**
+/*
  * @ingroup  menu.c
- * @brief    Returns the partition state string for the specified region.
+ * @brief    Returns the flash region partition string based on the region's
+ *           partition and the active partition.
  *
- * @param    region - flash region object
- * @return   char* - partition string
- */
-static char* PartitionStringGet(struct FLASH_REGION * const region)
+ * @param    region - pointer to the flash region struct
+ * @return   const char* - flash region partition string
+*/
+static const char* FlashRegionPartitionStringGet(struct FLASH_REGION * const region)
 {
-    enum PANEL panel = region->panelGet();
-    char* result;
+    enum PARTITION partition = region->partitionGet();
 
-    if(panel == PANEL_BOTH)
+    if(partition == PARTITION_BOTH)
     {
-        result = "BOTH    ";
+        return "BOTH (BOTH)";
     }
-    else if(((panel == PANEL_1) && (PARTITION_ActiveGet() == 1U)) ||
-            ((panel == PANEL_2) && (PARTITION_ActiveGet() == 2U)))
+    else if(((partition == PARTITION_1) && (PARTITION_ActiveGet() == 1U)) ||
+            ((partition == PARTITION_2) && (PARTITION_ActiveGet() == 2U)))
     {
-        result = "ACTIVE  ";
+        if(partition == PARTITION_1)
+        {
+            return "1 (ACTIVE)";
+        }
+        else
+        {
+            return "2 (ACTIVE)";
+        }
     }
     else
     {
-        result = "INACTIVE";
+        if(partition == PARTITION_1)
+        {
+            return "1 (INACTIVE)";
+        }
+        else
+        {
+            return "2 (INACTIVE)";
+        }
     }
-
-    return result;
 }
 
 /**
@@ -164,8 +167,6 @@ static void FlashRegionSeparatorPrint(void)
 {
     (void)printf("  ");
     PrintRepeatedChar('-', FLASHREGION_NUMBER_WIDTH);
-    (void)printf(" | ");
-    PrintRepeatedChar('-', FLASHREGION_PANEL_WIDTH);
     (void)printf(" | ");
     PrintRepeatedChar('-', FLASHREGION_PARTITION_WIDTH);
     (void)printf(" | ");
@@ -378,7 +379,7 @@ static void FlashRegionAddressStringGet(uint32_t addressField,
 
 /**
  * @ingroup  menu.c
- * @brief    Prints information about all flash regions, including panel,
+ * @brief    Prints information about all flash regions, including partition,
  *           partition, type, start/end addresses, lock status, and write
  *           enable status.
  *
@@ -393,15 +394,14 @@ void FlashRegionInfoPrint(void)
 
     (void)printf("  Flash Regions\r\n");
     (void)printf("  ----------------------------------------------------------------------------------------------------------------------\r\n");
-    (void)printf("  %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s\r\n",
-                 FLASHREGION_NUMBER_WIDTH, "NUMBER",
-                 FLASHREGION_PANEL_WIDTH, "PANEL",
-                 FLASHREGION_PARTITION_WIDTH, "PARTITION",
-                 FLASHREGION_TYPE_WIDTH, "REGION TYPE",
-                 FLASHREGION_ADDRESS_WIDTH, "START ADDRESS",
-                 FLASHREGION_ADDRESS_WIDTH, "END ADDRESS",
-                 FLASHREGION_LOCK_STATUS_WIDTH, "LOCK STATUS",
-                 FLASHREGION_WRITE_WIDTH, "WRITE ENABLED");
+    (void)printf("  %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s\r\n",
+             FLASHREGION_NUMBER_WIDTH, "NUMBER",
+             FLASHREGION_PARTITION_WIDTH, "PARTITION",
+             FLASHREGION_TYPE_WIDTH, "REGION TYPE",
+             FLASHREGION_ADDRESS_WIDTH, "START ADDRESS",
+             FLASHREGION_ADDRESS_WIDTH, "END ADDRESS",
+             FLASHREGION_LOCK_STATUS_WIDTH, "LOCK STATUS",
+             FLASHREGION_WRITE_WIDTH, "WRITE ENABLED");
 
     FlashRegionSeparatorPrint();
 
@@ -415,14 +415,13 @@ void FlashRegionInfoPrint(void)
                                     endAddressString,
                                     sizeof(endAddressString));
 
-        (void)printf("  %-*u | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s\r\n",
-                     FLASHREGION_NUMBER_WIDTH, (unsigned int)i,
-                     FLASHREGION_PANEL_WIDTH, panelStrings[flashRegion[i]->panelGet()],
-                     FLASHREGION_PARTITION_WIDTH, PartitionStringGet(flashRegion[i]),
-                     FLASHREGION_TYPE_WIDTH, FlashRegionTypeStringGet(i),
-                     FLASHREGION_ADDRESS_WIDTH, startAddressString,
-                     FLASHREGION_ADDRESS_WIDTH, endAddressString,
-                     FLASHREGION_LOCK_STATUS_WIDTH, FlashRegionLockStatusStringGet(i),
-                     FLASHREGION_WRITE_WIDTH, flashRegion[i]->isWriteEnabled() ? "true" : "false");
+        (void)printf("  %-*u | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s\r\n",
+             FLASHREGION_NUMBER_WIDTH, (unsigned int)i,
+             FLASHREGION_PARTITION_WIDTH, FlashRegionPartitionStringGet(flashRegion[i]),
+             FLASHREGION_TYPE_WIDTH, FlashRegionTypeStringGet(i),
+             FLASHREGION_ADDRESS_WIDTH, startAddressString,
+             FLASHREGION_ADDRESS_WIDTH, endAddressString,
+             FLASHREGION_LOCK_STATUS_WIDTH, FlashRegionLockStatusStringGet(i),
+             FLASHREGION_WRITE_WIDTH, flashRegion[i]->isWriteEnabled() ? "true" : "false");
     }
 }

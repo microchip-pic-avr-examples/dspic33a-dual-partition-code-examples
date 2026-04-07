@@ -33,12 +33,12 @@
 
 static bool LockOptionSet(uint32_t option);
 static bool IsWriteEnabled(void);
-static enum PANEL PanelGet(void);
+static enum PARTITION PartitionGet(void);
 
 struct FLASH_REGION flashRegion1 = {
     .lockOptionSet = LockOptionSet,
     .isWriteEnabled = IsWriteEnabled,
-    .panelGet = PanelGet
+    .partitionGet = PartitionGet
 };
 
 static bool LockOptionSet(uint32_t option)
@@ -52,7 +52,7 @@ static bool IsWriteEnabled(void)
     return PR1CTRLbits.WR == 1;
 }
 
-static enum PANEL PanelGet(void)
+static enum PARTITION PartitionGet(void)
 {
     return PR1CTRLbits.PSEL;
 }
