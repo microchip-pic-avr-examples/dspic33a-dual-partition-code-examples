@@ -36,7 +36,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "xc.h"
+#include <xc.h>
 #include "bsp/led0.h"
 #include "bsp/led7.h"
 
@@ -73,6 +73,24 @@
 #define FLASH_INSTRUCTION_SIZE_IN_BYTES (4UL)
 #define FLASH_ERASE_PAGE_SIZE_IN_BYTES (FLASH_ERASE_PAGE_SIZE_IN_INSTRUCTIONS * 4UL)
 #define FLASH_WRITE_SIZE_IN_BYTES (4UL * FLASH_INSTRUCTION_SIZE_IN_BYTES)    //4 instructions written at a time
+
+#define FLASH_REGION_NUMBER_OF_REGIONS   8U
+
+#define FLASHREGION_NUMBER_WIDTH         6U
+#define FLASHREGION_PANEL_WIDTH          5U
+#define FLASHREGION_PARTITION_WIDTH      9U
+#define FLASHREGION_TYPE_WIDTH           11U
+#define FLASHREGION_ADDRESS_WIDTH        19U
+#define FLASHREGION_LOCK_STATUS_WIDTH    11U
+#define FLASHREGION_WRITE_WIDTH          13U
+
+#define FLASH_REGION_LOCK_MASK               0x00000003UL
+#define FLASH_REGION_LOCKED                  0x00000000UL
+#define FLASH_REGION_LOCKED_UNTIL_RESET      0x00000001UL
+#define FLASH_REGION_UNLOCKED                0x00000003UL
+
+#define FLASH_ACTIVE_SPACE_BASE              0x800000UL
+#define FLASH_INACTIVE_SPACE_BASE            0xC00000UL
 
 #define PRINT_REGION_SIZE 128
 
@@ -121,6 +139,18 @@ static const char* ValidStringGet(bool valid);
 static void SequenceInfoRowPrint(uint8_t partitionNumber, const char *stateLabel, uint32_t address);
 static void PrintRepeatedChar(char ch, uint8_t count);
 static void SequenceInfoSeparatorPrint(void);
+static void FlashRegionInfoPrint(void);
+static void FlashRegionSeparatorPrint(void);
+static uint32_t FlashRegionTypeGet(uint8_t regionNumber);
+static uint32_t FlashRegionStartFieldGet(uint8_t regionNumber);
+static uint32_t FlashRegionEndFieldGet(uint8_t regionNumber);
+static uint32_t FlashRegionLockGet(uint8_t regionNumber);
+static const char* FlashRegionTypeStringGet(uint8_t regionNumber);
+static const char* FlashRegionLockStatusStringGet(uint8_t regionNumber);
+static uint32_t FlashRegionAddressBuild(uint32_t addressField, bool activeSpace);
+static void FlashRegionAddressStringGet(uint32_t addressField,
+                                        char *buffer,
+                                        size_t bufferSize);
 
 void MENU_Print(void);
 
@@ -296,24 +326,6 @@ static char* PartitionStringGet(struct FLASH_REGION * const region){
     }
     
     return result;    
-}
-
-static void FlashRegionInfoPrint(void)
-{
-    (void)printf("  Flash Regions\r\n");
-    (void)printf("  -------------------------------------------\r\n");
-    (void)printf("  NUMBER | PANEL | PARTITION | WRITE ENABLED \r\n");
-    
-    for(size_t i=0; i<(sizeof(flashRegion)/sizeof(struct FLASH_REGION * const)); i++) {
-        struct FLASH_REGION * const region = flashRegion[i];
-        
-        (void)printf("   "); //text alignment
-        (void)printf("%u        ", i);  //Number
-        (void)printf("%s    ", panelStrings[region->panelGet()]); //Panel
-        (void)printf("%s   ", PartitionStringGet(region));
-        (void)printf("%s", region->isWriteEnabled() ? "true" : "false");
-        (void)printf("\r\n");
-    }
 }
 
 /**
@@ -894,4 +906,281 @@ static void SequenceInfoSeparatorPrint(void)
     (void)printf(" | ");
     PrintRepeatedChar('-', SEQINFO_ADDRESS_WIDTH);
     (void)printf("\r\n");
+}
+
+/**
+ * @ingroup  menu.c
+ * @brief    Prints the flash region table separator line.
+ *
+ * @param    none
+ * @return   none
+ */
+static void FlashRegionSeparatorPrint(void)
+{
+    (void)printf("  ");
+    PrintRepeatedChar('-', FLASHREGION_NUMBER_WIDTH);
+    (void)printf(" | ");
+    PrintRepeatedChar('-', FLASHREGION_PANEL_WIDTH);
+    (void)printf(" | ");
+    PrintRepeatedChar('-', FLASHREGION_PARTITION_WIDTH);
+    (void)printf(" | ");
+    PrintRepeatedChar('-', FLASHREGION_TYPE_WIDTH);
+    (void)printf(" | ");
+    PrintRepeatedChar('-', FLASHREGION_ADDRESS_WIDTH);
+    (void)printf(" | ");
+    PrintRepeatedChar('-', FLASHREGION_ADDRESS_WIDTH);
+    (void)printf(" | ");
+    PrintRepeatedChar('-', FLASHREGION_LOCK_STATUS_WIDTH);
+    (void)printf(" | ");
+    PrintRepeatedChar('-', FLASHREGION_WRITE_WIDTH);
+    (void)printf("\r\n");
+}
+
+/**
+ * @ingroup  menu.c
+ * @brief    Gets the RTYPE field of the specified flash region.
+ *
+ * @param    regionNumber - flash region number
+ * @return   uint32_t - RTYPE field
+ */
+static uint32_t FlashRegionTypeGet(uint8_t regionNumber)
+{
+    switch(regionNumber)
+    {
+        case 0U: return PR0CTRLbits.RTYPE;
+        case 1U: return PR1CTRLbits.RTYPE;
+        case 2U: return PR2CTRLbits.RTYPE;
+        case 3U: return PR3CTRLbits.RTYPE;
+        case 4U: return PR4CTRLbits.RTYPE;
+        case 5U: return PR5CTRLbits.RTYPE;
+        case 6U: return PR6CTRLbits.RTYPE;
+        case 7U: return PR7CTRLbits.RTYPE;
+        default: return 0U;
+    }
+}
+
+/**
+ * @ingroup  menu.c
+ * @brief    Gets the START field of the specified flash region.
+ *
+ * @param    regionNumber - flash region number
+ * @return   uint32_t - START field
+ */
+static uint32_t FlashRegionStartFieldGet(uint8_t regionNumber)
+{
+    switch(regionNumber)
+    {
+        case 0U: return PR0STbits.START;
+        case 1U: return PR1STbits.START;
+        case 2U: return PR2STbits.START;
+        case 3U: return PR3STbits.START;
+        case 4U: return PR4STbits.START;
+        case 5U: return PR5STbits.START;
+        case 6U: return PR6STbits.START;
+        case 7U: return PR7STbits.START;
+        default: return 0U;
+    }
+}
+
+/**
+ * @ingroup  menu.c
+ * @brief    Gets the END field of the specified flash region.
+ *
+ * @param    regionNumber - flash region number
+ * @return   uint32_t - END field
+ */
+static uint32_t FlashRegionEndFieldGet(uint8_t regionNumber)
+{
+    switch(regionNumber)
+    {
+        case 0U: return PR0ENDbits.END;
+        case 1U: return PR1ENDbits.END;
+        case 2U: return PR2ENDbits.END;
+        case 3U: return PR3ENDbits.END;
+        case 4U: return PR4ENDbits.END;
+        case 5U: return PR5ENDbits.END;
+        case 6U: return PR6ENDbits.END;
+        case 7U: return PR7ENDbits.END;
+        default: return 0U;
+    }
+}
+
+/**
+ * @ingroup  menu.c
+ * @brief    Gets the LOCK register value of the specified flash region.
+ *
+ * @param    regionNumber - flash region number
+ * @return   uint32_t - lock register value
+ */
+static uint32_t FlashRegionLockGet(uint8_t regionNumber)
+{
+    switch(regionNumber)
+    {
+        case 0U: return PR0LOCK;
+        case 1U: return PR1LOCK;
+        case 2U: return PR2LOCK;
+        case 3U: return PR3LOCK;
+        case 4U: return PR4LOCK;
+        case 5U: return PR5LOCK;
+        case 6U: return PR6LOCK;
+        case 7U: return PR7LOCK;
+        default: return 0U;
+    }
+}
+
+/**
+ * @ingroup  menu.c
+ * @brief    Returns the flash region type string.
+ *
+ * @param    regionNumber - flash region number
+ * @return   const char* - region type string
+ */
+static const char* FlashRegionTypeStringGet(uint8_t regionNumber)
+{
+    uint32_t regionType = FlashRegionTypeGet(regionNumber);
+
+    switch(regionType)
+    {
+        case 0x1U:
+            return "IRT";
+
+        case 0x2U:
+            return "OTP";
+
+        case 0x3U:
+            return "FIRMWARE";
+
+        default:
+            return "UNKNOWN";
+    }
+}
+
+/**
+ * @ingroup  menu.c
+ * @brief    Returns the flash region lock status string.
+ *
+ * @param    regionNumber - flash region number
+ * @return   const char* - lock status string
+ */
+static const char* FlashRegionLockStatusStringGet(uint8_t regionNumber)
+{
+    uint32_t lockValue = FlashRegionLockGet(regionNumber) & FLASH_REGION_LOCK_MASK;
+
+    switch(lockValue)
+    {
+        case FLASH_REGION_LOCKED:
+            return "Locked";
+
+        case FLASH_REGION_LOCKED_UNTIL_RESET:
+            return "Until Reset";
+
+        case FLASH_REGION_UNLOCKED:
+            return "Unlocked";
+
+        default:
+            return "UNKNOWN";
+    }
+}
+
+/**
+ * @ingroup  menu.c
+ * @brief    Builds a display address in active or inactive address space.
+ *
+ * @param    addressField - START or END field from PRxST/PRxEND
+ * @param    activeSpace - true for 0x8xxxxx, false for 0xCxxxxx
+ * @return   uint32_t - display address
+ */
+static uint32_t FlashRegionAddressBuild(uint32_t addressField, bool activeSpace)
+{
+    uint32_t displayAddress;
+
+    /* NOTE:
+     * If START/END fields require shifting/scaling, update this line.
+     */
+    displayAddress = addressField;
+
+    if(activeSpace)
+    {
+        displayAddress |= FLASH_ACTIVE_SPACE_BASE;
+    }
+    else
+    {
+        displayAddress |= FLASH_INACTIVE_SPACE_BASE;
+    }
+
+    return displayAddress;
+}
+
+/**
+ * @ingroup  menu.c
+ * @brief    Formats the active/inactive address pair string.
+ *
+ * @param    addressField - START or END field from PRxST/PRxEND
+ * @param    buffer - destination string buffer
+ * @param    bufferSize - destination buffer size
+ * @return   none
+ */
+static void FlashRegionAddressStringGet(uint32_t addressField,
+                                        char *buffer,
+                                        size_t bufferSize)
+{
+    uint32_t activeAddress = FlashRegionAddressBuild(addressField, true);
+    uint32_t inactiveAddress = FlashRegionAddressBuild(addressField, false);
+
+    (void)snprintf(buffer,
+                   bufferSize,
+                   "0x%06lX/0x%06lX",
+                   (unsigned long)activeAddress,
+                   (unsigned long)inactiveAddress);
+}
+
+/**
+ * @ingroup  menu.c
+ * @brief    Prints information about all flash regions, including panel,
+ *           partition, type, start/end addresses, lock status, and write
+ *           enable status.
+ *
+ * @param    none
+ * @return   none
+ */
+static void FlashRegionInfoPrint(void)
+{
+    uint8_t i;
+    char startAddressString[24];
+    char endAddressString[24];
+
+    (void)printf("  Flash Regions\r\n");
+    (void)printf("  ----------------------------------------------------------------------------------------------------------------------\r\n");
+    (void)printf("  %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s\r\n",
+                 FLASHREGION_NUMBER_WIDTH, "NUMBER",
+                 FLASHREGION_PANEL_WIDTH, "PANEL",
+                 FLASHREGION_PARTITION_WIDTH, "PARTITION",
+                 FLASHREGION_TYPE_WIDTH, "REGION TYPE",
+                 FLASHREGION_ADDRESS_WIDTH, "START ADDRESS",
+                 FLASHREGION_ADDRESS_WIDTH, "END ADDRESS",
+                 FLASHREGION_LOCK_STATUS_WIDTH, "LOCK STATUS",
+                 FLASHREGION_WRITE_WIDTH, "WRITE ENABLED");
+
+    FlashRegionSeparatorPrint();
+
+    for(i = 0U; i < FLASH_REGION_NUMBER_OF_REGIONS; i++)
+    {
+        FlashRegionAddressStringGet(FlashRegionStartFieldGet(i),
+                                    startAddressString,
+                                    sizeof(startAddressString));
+
+        FlashRegionAddressStringGet(FlashRegionEndFieldGet(i),
+                                    endAddressString,
+                                    sizeof(endAddressString));
+
+        (void)printf("  %-*u | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s\r\n",
+                     FLASHREGION_NUMBER_WIDTH, (unsigned int)i,
+                     FLASHREGION_PANEL_WIDTH, panelStrings[flashRegion[i]->panelGet()],
+                     FLASHREGION_PARTITION_WIDTH, PartitionStringGet(flashRegion[i]),
+                     FLASHREGION_TYPE_WIDTH, FlashRegionTypeStringGet(i),
+                     FLASHREGION_ADDRESS_WIDTH, startAddressString,
+                     FLASHREGION_ADDRESS_WIDTH, endAddressString,
+                     FLASHREGION_LOCK_STATUS_WIDTH, FlashRegionLockStatusStringGet(i),
+                     FLASHREGION_WRITE_WIDTH, flashRegion[i]->isWriteEnabled() ? "true" : "false");
+    }
 }

@@ -84,7 +84,7 @@ static bool LockOptionSet(uint32_t option)
 
 static bool IsWriteEnabled(void)
 {
-    return PR0CTRLbits.WR == 0;
+    return PR0CTRLbits.WR == 1;
 }
 
 static enum PANEL PanelGet(void)
