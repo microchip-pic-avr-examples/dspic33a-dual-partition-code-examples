@@ -123,19 +123,19 @@ static struct COMMAND commands[] = {
     {
         .type = TYPE_COMMAND,
         .code = 'p',
-        .description = "Print the test area of the active partition",
+        .description = "Print the test area of the active partition (0x810000)",
         .execute = PrintActiveTestArea
     },
     {
         .type = TYPE_COMMAND,
         .code = 'e',
-        .description = "Erase the test area of the active partition",
+        .description = "Erase the test area of the active partition (0x810000)",
         .execute = EraseActiveTestArea
     },
     {
         .type = TYPE_COMMAND,
         .code = 'w',
-        .description = "Write test data to the test area of the active partition",
+        .description = "Write test data to the test area of the active partition (0x810000)",
         .execute = WriteActiveTestArea
     },
     {
@@ -153,19 +153,19 @@ static struct COMMAND commands[] = {
     {
         .type = TYPE_COMMAND,
         .code = 'P',
-        .description = "Print the test area of the inactive partition",
+        .description = "Print the test area of the inactive partition (0xC10000)",
         .execute = PrintInactiveTestArea
     },
     {
         .type = TYPE_COMMAND,
         .code = 'E',
-        .description = "Erase the test area of the inactive partition",
+        .description = "Erase the test area of the inactive partition (0xC10000)",
         .execute = EraseInactiveTestArea
     },
     {
         .type = TYPE_COMMAND,
         .code = 'W',
-        .description = "Write test data to the test area of the inactive partition",
+        .description = "Write test data to the test area of the inactive partition (0xC10000)",
         .execute = WriteInactiveTestArea
     },
     {
