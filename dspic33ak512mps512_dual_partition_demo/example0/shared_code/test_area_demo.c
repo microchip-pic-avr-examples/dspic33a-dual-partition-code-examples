@@ -36,6 +36,7 @@
 
 #include "mcc_generated_files/flash/flash_types.h"
 #include "mcc_generated_files/flash/flash_nonblocking.h"
+#include "partition.h"
 #include "test_area_demo.h"
 
 #define ACTIVE_PARTITION_BASE_ADDRESS      0x800000UL
@@ -50,6 +51,10 @@
 /* Private Function Prototypes                                                */
 /******************************************************************************/
 static void PrintRegion(uint32_t address);
+static uint8_t ActiveTestAreaRegionNumberGet(void);
+static uint8_t InactiveTestAreaRegionNumberGet(void);
+static void PrintWriteFailure(uint8_t regionNumber);
+static void PrintEraseFailure(uint8_t regionNumber);
 
 /**
  * @ingroup  command.c
@@ -84,6 +89,72 @@ static void PrintRegion(uint32_t address)
     }
 
     (void)printf("\r\n\r\n");
+}
+
+/**
+ * @ingroup  command.c
+ * @brief    Returns the flash protection region number for active test-area
+ *           operations.
+ *
+ * @param    none
+ * @return   uint8_t - region number
+ */
+static uint8_t ActiveTestAreaRegionNumberGet(void)
+{
+    uint8_t regionNumber = 4U;
+
+    if(PARTITION_ActiveGet() == 1U)
+    {
+        regionNumber = 1U;
+    }
+
+    return regionNumber;
+}
+
+/**
+ * @ingroup  command.c
+ * @brief    Returns the flash protection region number for inactive test-area
+ *           operations.
+ *
+ * @param    none
+ * @return   uint8_t - region number
+ */
+static uint8_t InactiveTestAreaRegionNumberGet(void)
+{
+    uint8_t regionNumber = 4U;
+
+    if(PARTITION_InactiveGet() == 1U)
+    {
+        regionNumber = 1U;
+    }
+
+    return regionNumber;
+}
+
+/**
+ * @ingroup  command.c
+ * @brief    Prints a write failure message including the flash region number.
+ *
+ * @param    regionNumber - flash protection region number
+ * @return   none
+ */
+static void PrintWriteFailure(uint8_t regionNumber)
+{
+    (void)printf("Region %u failed to write: Write Protected\r\n\r\n",
+                 (unsigned int)regionNumber);
+}
+
+/**
+ * @ingroup  command.c
+ * @brief    Prints an erase failure message including the flash region number.
+ *
+ * @param    regionNumber - flash protection region number
+ * @return   none
+ */
+static void PrintEraseFailure(uint8_t regionNumber)
+{
+    (void)printf("Region %u failed to erase: Write Protected\r\n\r\n",
+                 (unsigned int)regionNumber);
 }
 
 /**
@@ -130,17 +201,37 @@ void WriteActiveTestArea(void)
         0x60616263, 0x64656667, 0x68696A6B, 0x6C6D6E6F,
         0x70717273, 0x74757677, 0x78797A7B, 0x7C7D7E7F,
     };
+    const uint32_t writeAddresses[] =
+    {
+        ACTIVE_TEST_AREA_ADDRESS + 0x00UL,
+        ACTIVE_TEST_AREA_ADDRESS + 0x10UL,
+        ACTIVE_TEST_AREA_ADDRESS + 0x20UL,
+        ACTIVE_TEST_AREA_ADDRESS + 0x30UL,
+        ACTIVE_TEST_AREA_ADDRESS + 0x40UL,
+        ACTIVE_TEST_AREA_ADDRESS + 0x50UL,
+        ACTIVE_TEST_AREA_ADDRESS + 0x60UL,
+        ACTIVE_TEST_AREA_ADDRESS + 0x70UL
+    };
+    uint8_t i;
+    bool writeFailed = false;
 
-    (void)FLASH_WordWrite(ACTIVE_TEST_AREA_ADDRESS + 0x00UL, &data[0], FLASH_UNLOCK_KEY);
-    (void)FLASH_WordWrite(ACTIVE_TEST_AREA_ADDRESS + 0x10UL, &data[4], FLASH_UNLOCK_KEY);
-    (void)FLASH_WordWrite(ACTIVE_TEST_AREA_ADDRESS + 0x20UL, &data[8], FLASH_UNLOCK_KEY);
-    (void)FLASH_WordWrite(ACTIVE_TEST_AREA_ADDRESS + 0x30UL, &data[12], FLASH_UNLOCK_KEY);
-    (void)FLASH_WordWrite(ACTIVE_TEST_AREA_ADDRESS + 0x40UL, &data[16], FLASH_UNLOCK_KEY);
-    (void)FLASH_WordWrite(ACTIVE_TEST_AREA_ADDRESS + 0x50UL, &data[20], FLASH_UNLOCK_KEY);
-    (void)FLASH_WordWrite(ACTIVE_TEST_AREA_ADDRESS + 0x60UL, &data[24], FLASH_UNLOCK_KEY);
-    (void)FLASH_WordWrite(ACTIVE_TEST_AREA_ADDRESS + 0x70UL, &data[28], FLASH_UNLOCK_KEY);
+    for(i = 0U; i < 8U; i++)
+    {
+        enum FLASH_RETURN_STATUS status =
+            FLASH_WordWrite(writeAddresses[i], &data[i * 4U], FLASH_UNLOCK_KEY);
 
-    PrintRegion(ACTIVE_TEST_AREA_ADDRESS);
+        if(status != FLASH_NO_ERROR)
+        {
+            PrintWriteFailure(ActiveTestAreaRegionNumberGet());
+            writeFailed = true;
+            break;
+        }
+    }
+
+    if(writeFailed == false)
+    {
+        PrintRegion(ACTIVE_TEST_AREA_ADDRESS);
+    }
 }
 
 /**
@@ -163,17 +254,37 @@ void WriteInactiveTestArea(void)
         0x9D9D9E9F, 0x98999A9B, 0x94959697, 0x90919293,
         0x8C8D8E8F, 0x88898A8B, 0x84858687, 0x80818283,
     };
+    const uint32_t writeAddresses[] =
+    {
+        INACTIVE_TEST_AREA_ADDRESS + 0x00UL,
+        INACTIVE_TEST_AREA_ADDRESS + 0x10UL,
+        INACTIVE_TEST_AREA_ADDRESS + 0x20UL,
+        INACTIVE_TEST_AREA_ADDRESS + 0x30UL,
+        INACTIVE_TEST_AREA_ADDRESS + 0x40UL,
+        INACTIVE_TEST_AREA_ADDRESS + 0x50UL,
+        INACTIVE_TEST_AREA_ADDRESS + 0x60UL,
+        INACTIVE_TEST_AREA_ADDRESS + 0x70UL
+    };
+    uint8_t i;
+    bool writeFailed = false;
 
-    (void)FLASH_WordWrite(INACTIVE_TEST_AREA_ADDRESS + 0x00UL, &data[0], FLASH_UNLOCK_KEY);
-    (void)FLASH_WordWrite(INACTIVE_TEST_AREA_ADDRESS + 0x10UL, &data[4], FLASH_UNLOCK_KEY);
-    (void)FLASH_WordWrite(INACTIVE_TEST_AREA_ADDRESS + 0x20UL, &data[8], FLASH_UNLOCK_KEY);
-    (void)FLASH_WordWrite(INACTIVE_TEST_AREA_ADDRESS + 0x30UL, &data[12], FLASH_UNLOCK_KEY);
-    (void)FLASH_WordWrite(INACTIVE_TEST_AREA_ADDRESS + 0x40UL, &data[16], FLASH_UNLOCK_KEY);
-    (void)FLASH_WordWrite(INACTIVE_TEST_AREA_ADDRESS + 0x50UL, &data[20], FLASH_UNLOCK_KEY);
-    (void)FLASH_WordWrite(INACTIVE_TEST_AREA_ADDRESS + 0x60UL, &data[24], FLASH_UNLOCK_KEY);
-    (void)FLASH_WordWrite(INACTIVE_TEST_AREA_ADDRESS + 0x70UL, &data[28], FLASH_UNLOCK_KEY);
+    for(i = 0U; i < 8U; i++)
+    {
+        enum FLASH_RETURN_STATUS status =
+            FLASH_WordWrite(writeAddresses[i], &data[i * 4U], FLASH_UNLOCK_KEY);
 
-    PrintRegion(INACTIVE_TEST_AREA_ADDRESS);
+        if(status != FLASH_NO_ERROR)
+        {
+            PrintWriteFailure(InactiveTestAreaRegionNumberGet());
+            writeFailed = true;
+            break;
+        }
+    }
+
+    if(writeFailed == false)
+    {
+        PrintRegion(INACTIVE_TEST_AREA_ADDRESS);
+    }
 }
 
 /**
@@ -185,8 +296,17 @@ void WriteInactiveTestArea(void)
  */
 void EraseActiveTestArea(void)
 {
-    (void)FLASH_PageErase(ACTIVE_TEST_AREA_ADDRESS, FLASH_UNLOCK_KEY);
-    PrintRegion(ACTIVE_TEST_AREA_ADDRESS);
+    enum FLASH_RETURN_STATUS status =
+        FLASH_PageErase(ACTIVE_TEST_AREA_ADDRESS, FLASH_UNLOCK_KEY);
+
+    if(status != FLASH_NO_ERROR)
+    {
+        PrintEraseFailure(ActiveTestAreaRegionNumberGet());
+    }
+    else
+    {
+        PrintRegion(ACTIVE_TEST_AREA_ADDRESS);
+    }
 }
 
 /**
@@ -198,20 +318,32 @@ void EraseActiveTestArea(void)
  */
 void EraseInactiveTestArea(void)
 {
-    (void)FLASH_PageErase(INACTIVE_TEST_AREA_ADDRESS, FLASH_UNLOCK_KEY);
-    PrintRegion(INACTIVE_TEST_AREA_ADDRESS);
+    enum FLASH_RETURN_STATUS status =
+        FLASH_PageErase(INACTIVE_TEST_AREA_ADDRESS, FLASH_UNLOCK_KEY);
+
+    if(status != FLASH_NO_ERROR)
+    {
+        PrintEraseFailure(InactiveTestAreaRegionNumberGet());
+    }
+    else
+    {
+        PrintRegion(INACTIVE_TEST_AREA_ADDRESS);
+    }
 }
 
 /**
  * @ingroup  command.c
- * @brief    Issues a bulk erase on the inactive partition.
+ * @brief    Issues a bulk/panel/partition erase on the inactive partition.
  *
  * @param    none
  * @return   none
  */
 void BulkErase(void)
 {
-    if(FLASH_BulkErase(INACTIVE_PARTITION_BASE_ADDRESS, FLASH_UNLOCK_KEY) == FLASH_NO_ERROR)
+    enum FLASH_RETURN_STATUS status =
+        FLASH_BulkErase(INACTIVE_PARTITION_BASE_ADDRESS, FLASH_UNLOCK_KEY);
+
+    if(status == FLASH_NO_ERROR)
     {
         (void)printf("Inactive Partition successfully erased.\r\n\r\n");
     }
