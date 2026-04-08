@@ -612,7 +612,7 @@
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="800000-87ffff"/>
         <property key="programmerToGoFilePath"
-                  value="C:/work/repos/dspic33a_dual_panel_examples/example0/partition1/debug/default/default_ptg"/>
+                  value="C:/Users/C74569/dspic33a-dual-partition-code-examples/dspic33ak512mps512_dual_partition_demo/example0/partition1/debug/default/default_ptg"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.pgmentry.voltage" value="low"/>
