@@ -1,3 +1,10 @@
+# dsPIC33AK512MPS512 Dual Partition Demo v1.0.2
+## Release Highlights
+* Fix incorrect memory ranges in image
+
+## Features Added\Updated
+* Fix incorrect memory ranges in image
+
 # dsPIC33AK512MPS512 Dual Partition Demo v1.0.1
 ## Release Highlights
 * Added missing disclaimers.
