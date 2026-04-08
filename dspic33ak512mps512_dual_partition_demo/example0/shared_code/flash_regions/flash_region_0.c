@@ -49,9 +49,9 @@
  * In this example, region 0 is configured as:
  * - A firmware region (permissions can thus be modified after unlocking)
  * - Read/Execution enabled by default, Writes disabled by default
- * - Applied to BOTH panels/partitions.  The same rules defined above will apply
+ * - Applied to BOTH partitions.  The same rules defined above will apply
  *   when reading/writing/erasing the same memory range of the active or inactive
- *   panel/partition.
+ *   partition.
  * 
  * See config_bits.c for the configuration settings of this region.
  ******************************************************************************/
@@ -60,12 +60,12 @@
 
 static bool LockOptionSet(uint32_t option);
 static bool IsWriteEnabled(void);
-static enum PANEL PanelGet(void);
+static enum PARTITION PartitionGet(void);
 
 struct FLASH_REGION flashRegion0 = {
     .lockOptionSet = LockOptionSet,
     .isWriteEnabled = IsWriteEnabled,
-    .panelGet = PanelGet
+    .partitionGet = PartitionGet
 };
 
 /**
@@ -84,10 +84,10 @@ static bool LockOptionSet(uint32_t option)
 
 static bool IsWriteEnabled(void)
 {
-    return PR0CTRLbits.WR == 0;
+    return PR0CTRLbits.WR == 1;
 }
 
-static enum PANEL PanelGet(void)
+static enum PARTITION PartitionGet(void)
 {
     return PR0CTRLbits.PSEL;
 }

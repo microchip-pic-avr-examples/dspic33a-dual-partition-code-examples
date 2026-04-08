@@ -69,6 +69,9 @@
       <itemPath>../shared_code/partition.h</itemPath>
       <itemPath>../shared_code/scan.h</itemPath>
       <itemPath>../shared_code/command.h</itemPath>
+      <itemPath>../shared_code/sequence_info.h</itemPath>
+      <itemPath>../shared_code/flash_region_info.h</itemPath>
+      <itemPath>../shared_code/test_area_demo.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -148,6 +151,9 @@
       <itemPath>../shared_code/partition.c</itemPath>
       <itemPath>../shared_code/scan.c</itemPath>
       <itemPath>../shared_code/command.c</itemPath>
+      <itemPath>../shared_code/sequence_info.c</itemPath>
+      <itemPath>../shared_code/flash_region_info.c</itemPath>
+      <itemPath>../shared_code/test_area_demo.c</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
@@ -605,6 +611,8 @@
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="800000-87ffff"/>
+        <property key="programmerToGoFilePath"
+                  value="C:/Users/C74569/dspic33a-dual-partition-code-examples/dspic33ak512mps512_dual_partition_demo/example0/partition1/debug/default/default_ptg"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.pgmentry.voltage" value="low"/>

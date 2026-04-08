@@ -67,6 +67,9 @@
       <itemPath>../shared_code/partition.h</itemPath>
       <itemPath>../shared_code/scan.h</itemPath>
       <itemPath>../shared_code/command.h</itemPath>
+      <itemPath>../shared_code/sequence_info.h</itemPath>
+      <itemPath>../shared_code/flash_region_info.h</itemPath>
+      <itemPath>../shared_code/test_area_demo.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -146,6 +149,9 @@
       <itemPath>../shared_code/partition.c</itemPath>
       <itemPath>../shared_code/scan.c</itemPath>
       <itemPath>../shared_code/command.c</itemPath>
+      <itemPath>../shared_code/sequence_info.c</itemPath>
+      <itemPath>../shared_code/flash_region_info.c</itemPath>
+      <itemPath>../shared_code/test_area_demo.c</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
