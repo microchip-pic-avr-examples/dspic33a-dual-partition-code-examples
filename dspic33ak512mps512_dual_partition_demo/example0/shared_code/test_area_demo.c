@@ -333,17 +333,14 @@ void EraseInactiveTestArea(void)
 
 /**
  * @ingroup  command.c
- * @brief    Issues a bulk/panel/partition erase on the inactive partition.
+ * @brief    Issues a bulk erase on the inactive partition.
  *
  * @param    none
  * @return   none
  */
 void BulkErase(void)
 {
-    enum FLASH_RETURN_STATUS status =
-        FLASH_BulkErase(INACTIVE_PARTITION_BASE_ADDRESS, FLASH_UNLOCK_KEY);
-
-    if(status == FLASH_NO_ERROR)
+    if(FLASH_BulkErase(INACTIVE_PARTITION_BASE_ADDRESS, FLASH_UNLOCK_KEY) == FLASH_NO_ERROR)
     {
         (void)printf("Inactive Partition successfully erased.\r\n\r\n");
     }
