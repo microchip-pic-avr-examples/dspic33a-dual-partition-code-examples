@@ -65,34 +65,34 @@
  * Flash Protection Region 0
  * -----------------------------------------------------------------------------
  * PANEL: BOTH
- * ADDRESS RANGE: 0x802000-0x802FFF
+ * ADDRESS RANGE: 0x810000-0x811FFF
  * TYPE: FIRMWARE
  * PERMISSIONS ON RESET: 
  *     Execution: Enabled
  *     Read: Enabled
- *     Write: Disabled
+ *     Write: Enabled
  */
 // FPR0CTRL
 #pragma config FPR0CTRL_RDIS = OFF    //Region protection disable bit->Protection is enabled
 #pragma config FPR0CTRL_ERAO = ON    //Error Report Address Only->ECC error reporting information restricted to address only
 #pragma config FPR0CTRL_EX = ON    //Execute permission bit.->Code execution is enabled.
 #pragma config FPR0CTRL_RD = ON    //Read permission bit.->Read operation is enabled.
-#pragma config FPR0CTRL_WR = OFF    //Write permission bit.->Write and erase operation is disabled
+#pragma config FPR0CTRL_WR = ON    //Write permission bit.->Write and erase operation is enabled.
 #pragma config FPR0CTRL_CRC = ON    //CRC enable bit.->NVM controller CRC calculation is enabled.
 #pragma config FPR0CTRL_RTYPE = FIRMWARE    //Region type selection bits.->Firmware configurable region.
 #pragma config FPR0CTRL_PSEL = BOTH   //Partition Select->Both panels
 
 // FPR0ST
-#pragma config FPR0ST_START = 0x2    //Region start address bits.
+#pragma config FPR0ST_START = 0x10    //Region start address bits.
 
 // FPR0END
-#pragma config FPR0END_END = 0x2    //Region end address bits.
+#pragma config FPR0END_END = 0x11    //Region end address bits.
 
 /* -----------------------------------------------------------------------------
  * Flash Protection Region 1
  * -----------------------------------------------------------------------------
  * PANEL: 1
- * ADDRESS RANGE: 0x810000-0x810FFF
+ * ADDRESS RANGE: 0x811000-0x811FFF
  * TYPE: FIRMWARE
  * PERMISSIONS ON RESET: 
  *     Execution: Enabled
@@ -107,10 +107,10 @@
 #pragma config FPR1CTRL_WR = OFF    //Write permission bit.->Write and erase operation is disabled
 #pragma config FPR1CTRL_CRC = ON    //CRC enable bit.->NVM controller CRC calculation is enabled.
 #pragma config FPR1CTRL_RTYPE = FIRMWARE   //Region type selection bits.->Firmware configurable region.
-#pragma config FPR1CTRL_PSEL = PANEL1    //Partition Select->Panel 1
+#pragma config FPR1CTRL_PSEL = PANEL2    //Partition Select->Panel 2
 
 // FPR1ST
-#pragma config FPR1ST_START = 0x10    //Region start address bits.
+#pragma config FPR1ST_START = 0x11    //Region start address bits.
 
 // FPR1END
 #pragma config FPR1END_END = 0x11    //Region end address bits.
@@ -119,163 +119,126 @@
  * Flash Protection Region 2
  * -----------------------------------------------------------------------------
  * PANEL: 1
- * ADDRESS RANGE: 0x806000-0x806FFF
- * TYPE: IRT
+ * ADDRESS RANGE: 0x812000-0x812FFF
+ * TYPE: FIRMWARE
  * PERMISSIONS ON RESET: 
  *     Execution: Enabled
  *     Read: Enabled
- *     Write: Disabled
+ *     Write: Enabled
  */
 // FPR2CTRL
 #pragma config FPR2CTRL_RDIS = OFF    //Region protection disable bit->Protection is enabled
 #pragma config FPR2CTRL_ERAO = ON    //Error Report Address Only->ECC error reporting information restricted to address only
 #pragma config FPR2CTRL_EX = ON    //Execute permission bit.->Code execution is enabled
 #pragma config FPR2CTRL_RD = ON    //Read permission bit.->Read operation is enabled.
-#pragma config FPR2CTRL_WR = OFF    //Write permission bit.->Write and erase operation is disabled
+#pragma config FPR2CTRL_WR = ON    //Write permission bit.->Write and erase operation is enabled.
 #pragma config FPR2CTRL_CRC = ON    //CRC enable bit.->NVM controller CRC calculation is enabled.
-#pragma config FPR2CTRL_RTYPE = IRT    //Region type selection bits.->IRT (Immutable Root of Trust) configurable region.
+#pragma config FPR2CTRL_RTYPE = FIRMWARE    //Region type selection bits.->Firmware configurable region.
 #pragma config FPR2CTRL_PSEL = PANEL1    //Partition Select->Panel 1
 
 // FPR2ST
-#pragma config FPR2ST_START = 0x6    //Region start address bits.
+#pragma config FPR2ST_START = 0x12    //Region start address bits.
 
 // FPR2END
-#pragma config FPR2END_END = 0x6    //Region end address bits.
+#pragma config FPR2END_END = 0x12    //Region end address bits.
 
 /* -----------------------------------------------------------------------------
  * Flash Protection Region 3
  * -----------------------------------------------------------------------------
  * PANEL: 2
- * ADDRESS RANGE: 0x802000-0x802FFF
+ * ADDRESS RANGE: 0x812000-0x812FFF
  * TYPE: FIRMWARE
  * PERMISSIONS ON RESET: 
  *     Execution: Enabled
  *     Read: Enabled
- *     Write: Enabled
+ *     Write: Disabled
  */
 // FPR3CTRL
 #pragma config FPR3CTRL_RDIS = OFF    //Region protection disable bit->Protection is enabled
 #pragma config FPR3CTRL_ERAO = ON    //Error Report Address Only->ECC error reporting information restricted to address only
 #pragma config FPR3CTRL_EX = ON    //Execute permission bit.->Code execution is enabled
 #pragma config FPR3CTRL_RD = ON    //Read permission bit.->Read operation is enabled.
-#pragma config FPR3CTRL_WR = ON    //Write permission bit.->Write and erase operation is enabled.
+#pragma config FPR3CTRL_WR = OFF    //Write permission bit.->Write and erase operation is disabled.
 #pragma config FPR3CTRL_CRC = ON    //CRC enable bit.->NVM controller CRC calculation is enabled.
 #pragma config FPR3CTRL_RTYPE = FIRMWARE    //Region type selection bits.->Firmware configurable region.
 #pragma config FPR3CTRL_PSEL = PANEL2    //Partition Select->Panel 2
 
 // FPR3ST
-#pragma config FPR3ST_START = 0x2    //Region start address bits.
+#pragma config FPR3ST_START = 0x12    //Region start address bits.
 
 // FPR3END
-#pragma config FPR3END_END = 0x2    //Region end address bits.
+#pragma config FPR3END_END = 0x12    //Region end address bits.
 
 /* -----------------------------------------------------------------------------
- * Flash Protection Region 4
+ * Flash Protection Regions 4-7
  * -----------------------------------------------------------------------------
- * PANEL: 2
- * ADDRESS RANGE: 0x810000-0x810FFF
- * TYPE: FIRMWARE
- * PERMISSIONS ON RESET: 
- *     Execution: Enabled
- *     Read: Enabled
- *     Write: Enabled
+ * PARTITION: unused
+ * 
+ * These regions are disabled and available for use.
  */
 // FPR4CTRL
-#pragma config FPR4CTRL_RDIS = OFF    //Region protection disable bit->Protection is enabled
+#pragma config FPR4CTRL_RDIS = ON    //Region protection disable bit->Protection is disabled
 #pragma config FPR4CTRL_ERAO = ON    //Error Report Address Only->ECC error reporting information restricted to address only
 #pragma config FPR4CTRL_EX = ON    //Execute permission bit.->Code execution is enabled
 #pragma config FPR4CTRL_RD = ON    //Read permission bit.->Read operation is enabled.
 #pragma config FPR4CTRL_WR = ON    //Write permission bit.->Write and erase operation is enabled
 #pragma config FPR4CTRL_CRC = ON    //CRC enable bit.->NVM controller CRC calculation is enabled.
 #pragma config FPR4CTRL_RTYPE = FIRMWARE    //Region type selection bits.->Firmware configurable region.
-#pragma config FPR4CTRL_PSEL = PANEL2    //Partition Select->PANEL2
+#pragma config FPR4CTRL_PSEL = BOTH    //Partition Select->Both Panels
 
 // FPR4ST
-#pragma config FPR4ST_START = 0x10    //Region start address bits.
+#pragma config FPR4ST_START = 0x7ff    //Region start address bits.
 
 // FPR4END
-#pragma config FPR4END_END = 0x11    //Region end address bits.
+#pragma config FPR4END_END = 0x7ff    //Region end address bits.
 
-/* -----------------------------------------------------------------------------
- * Flash Protection Region 5
- * -----------------------------------------------------------------------------
- * PANEL: 2
- * ADDRESS RANGE: 0x805000-0x805FFF
- * TYPE: FIRMWARE
- * PERMISSIONS ON RESET: 
- *     Execution: Enabled
- *     Read: Enabled
- *     Write: Disabled
- */
 // FPR5CTRL
-#pragma config FPR5CTRL_RDIS = OFF    //Region protection disable bit->Protection is enabled
+#pragma config FPR5CTRL_RDIS = ON    //Region protection disable bit->Protection is disabled
 #pragma config FPR5CTRL_ERAO = ON    //Error Report Address Only->ECC error reporting information restricted to address only
 #pragma config FPR5CTRL_EX = ON    //Execute permission bit.->Code execution is enabled.
 #pragma config FPR5CTRL_RD = ON    //Read permission bit.->Read operation is enabled.
-#pragma config FPR5CTRL_WR = OFF    //Write permission bit.->Write and erase operation is disabled.
+#pragma config FPR5CTRL_WR = ON    //Write permission bit.->Write and erase operation is enabled.
 #pragma config FPR5CTRL_CRC = ON    //CRC enable bit.->NVM controller CRC calculation is enabled.
 #pragma config FPR5CTRL_RTYPE = FIRMWARE    //Region type selection bits.->Firmware configurable region.
-#pragma config FPR5CTRL_PSEL = PANEL2    //Partition Select->Panel 2
+#pragma config FPR5CTRL_PSEL = BOTH    //Partition Select->Both Panels
 
 // FPR5ST
-#pragma config FPR5ST_START = 0x5    //Region start address bits.
+#pragma config FPR5ST_START = 0x7ff    //Region start address bits.
 
 // FPR5END
-#pragma config FPR5END_END = 0x5    //Region end address bits.
+#pragma config FPR5END_END = 0x7ff    //Region end address bits.
 
-/* -----------------------------------------------------------------------------
- * Flash Protection Region 6
- * -----------------------------------------------------------------------------
- * PANEL: 2
- * ADDRESS RANGE: 0x806000-0x807FFF
- * TYPE: IRT
- * PERMISSIONS ON RESET: 
- *     Execution: Enabled
- *     Read: Enabled
- *     Write: Disabled
- */
 // FPR6CTRL
-#pragma config FPR6CTRL_RDIS = OFF    //Region protection disable bit->Protection is enabled
+#pragma config FPR6CTRL_RDIS = ON    //Region protection disable bit->Protection is disabled
 #pragma config FPR6CTRL_ERAO = ON    //Error Report Address Only->ECC error reporting information restricted to address only
 #pragma config FPR6CTRL_EX = ON    //Execute permission bit.->Code execution is enabled.
 #pragma config FPR6CTRL_RD = ON    //Read permission bit.->Read operation is enabled.
-#pragma config FPR6CTRL_WR = OFF    //Write permission bit.->Write and erase operation is disabled.
+#pragma config FPR6CTRL_WR = ON    //Write permission bit.->Write and erase operation is enabled.
 #pragma config FPR6CTRL_CRC = ON    //CRC enable bit.->NVM controller CRC calculation is enabled.
-#pragma config FPR6CTRL_RTYPE = IRT    //Region type selection bits.->IRT (Immutable Root of Trust) configurable region.
-#pragma config FPR6CTRL_PSEL = PANEL2    //Partition Select->Panel 2
+#pragma config FPR6CTRL_RTYPE = FIRMWARE    //Region type selection bits.->Firmware configurable region.
+#pragma config FPR6CTRL_PSEL = BOTH    //Partition Select->Both Panels
 
 // FPR6ST
-#pragma config FPR6ST_START = 0x6    //Region start address bits.
+#pragma config FPR6ST_START = 0x7ff    //Region start address bits.
 
 // FPR6END
-#pragma config FPR6END_END = 0x7    //Region end address bits.
+#pragma config FPR6END_END = 0x7ff    //Region end address bits.
 
-/* -----------------------------------------------------------------------------
- * Flash Protection Region 7
- * -----------------------------------------------------------------------------
- * PANEL: Both
- * ADDRESS RANGE: 0x80C000-0x80FFFF
- * TYPE: FIRMWARE
- * PERMISSIONS ON RESET: 
- *     Execution: Enabled
- *     Read: Enabled
- *     Write: Disabled
- */
 // FPR7CTRL
-#pragma config FPR7CTRL_RDIS = OFF    //Region protection disable bit->Protection is enabled
+#pragma config FPR7CTRL_RDIS = ON    //Region protection disable bit->Protection is disabled
 #pragma config FPR7CTRL_ERAO = ON    //Error Report Address Only->ECC error reporting information restricted to address only
 #pragma config FPR7CTRL_EX = ON    //Execute permission bit.->Code execution is enabled.
 #pragma config FPR7CTRL_RD = ON    //Read permission bit.->Read operation is enabled.
-#pragma config FPR7CTRL_WR = OFF    //Write permission bit.->Write and erase operation is disabled.
+#pragma config FPR7CTRL_WR = ON    //Write permission bit.->Write and erase operation is enabled.
 #pragma config FPR7CTRL_CRC = ON    //CRC enable bit.->NVM controller CRC calculation is enabled.
 #pragma config FPR7CTRL_RTYPE = FIRMWARE    //Region type selection bits.->Firmware configurable region.
 #pragma config FPR7CTRL_PSEL = BOTH    //Partition Select->Both Panels
 
 // FPR7ST
-#pragma config FPR7ST_START = 0xc    //Region start address bits.
+#pragma config FPR7ST_START = 0x7ff    //Region start address bits.
 
 // FPR7END
-#pragma config FPR7END_END = 0xf    //Region end address bits.
+#pragma config FPR7END_END = 0x7ff    //Region end address bits.
 
 // FIRT
 #pragma config FIRT_IRT = OFF    //Immutable Root of Trust Enable bit->Immutable root of trust (IRT) regions are disabled
