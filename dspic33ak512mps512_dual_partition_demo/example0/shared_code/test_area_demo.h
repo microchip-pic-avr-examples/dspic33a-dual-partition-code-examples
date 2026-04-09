@@ -22,12 +22,9 @@
 #ifndef TEST_AREA_DEMO_H
 #define TEST_AREA_DEMO_H
 
-void PrintActiveTestArea(void);
-void PrintInactiveTestArea(void);
-void WriteActiveTestArea(void);
-void WriteInactiveTestArea(void);
-void EraseActiveTestArea(void);
-void EraseInactiveTestArea(void);
+void PrintTestArea(void);
+void WriteTestArea(void);
+void EraseTestArea(void);
 void BulkErase(void);
 
 #endif /* TEST_AREA_DEMO_H */
