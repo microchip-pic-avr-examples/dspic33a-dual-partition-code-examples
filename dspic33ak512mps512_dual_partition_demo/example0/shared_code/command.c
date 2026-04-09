@@ -69,10 +69,6 @@ extern void BootSwap(void);
 /******************************************************************************/
 /* Private Function Prototypes                                                */
 /******************************************************************************/
-static bool GetRegionSelection(uint8_t* regionNum);
-static void UnlockRegion(void);
-static void LockRegion(void);
-static void LockRegionUntilReset(void);
 static void BootSwapRequested(void);
 static void BreakpointDemo(void);
 
@@ -90,83 +86,29 @@ struct COMMAND {
     void (*execute)(void);
 };
 
-static struct COMMAND commands[] = {    
-    // Flash Partition Lock & Unlock Options
+static struct COMMAND commands[] = {
+    /* Flash Test Area Options */
     {
         .type = TYPE_GROUP,
-        .description = "Flash Partition Lock & Unlock Options",
-    },
-    {
-        .type = TYPE_COMMAND,
-        .code = 'u',
-        .description = "Set a flash protection region to UNLOCKED",
-        .execute = UnlockRegion
-    },
-    {
-        .type = TYPE_COMMAND,
-        .code = 'l',
-        .description = "Set a flash protection region to LOCKED",
-        .execute = LockRegion
-    },
-    {
-        .type = TYPE_COMMAND,
-        .code = 'x',
-        .description = "Set a flash protection region to LOCKED UNTIL RESET",
-        .execute = LockRegionUntilReset
-    },
-    
-    // Dual Partition Flash Protection Regions: Active Partition
-    {
-        .type = TYPE_GROUP,
-        .description = "Active Partition",
+        .description = "Flash Test Area Options",
     },
     {
         .type = TYPE_COMMAND,
         .code = 'p',
-        .description = "Print the test area of the active partition (0x810000)",
-        .execute = PrintActiveTestArea
+        .description = "Print a test area",
+        .execute = PrintTestArea
     },
     {
         .type = TYPE_COMMAND,
         .code = 'e',
-        .description = "Erase the test area of the active partition (0x810000)",
-        .execute = EraseActiveTestArea
+        .description = "Erase a test area",
+        .execute = EraseTestArea
     },
     {
         .type = TYPE_COMMAND,
         .code = 'w',
-        .description = "Write test data to the test area of the active partition (0x810000)",
-        .execute = WriteActiveTestArea
-    },
-    {
-        .type = TYPE_COMMAND,
-        .code = 's',
-        .description = "Write the sequence number of the active partition",
-        .execute = SequenceNumberActiveUpdate
-    },
-    
-    // Dual Partition Flash Protection Regions: Inactive Partition
-    {
-        .type = TYPE_GROUP,
-        .description = "Inactive Partition - Dual Partition Flash Protection Regions (0xC10000)",
-    },
-    {
-        .type = TYPE_COMMAND,
-        .code = 'P',
-        .description = "Print the test area of the inactive partition (0xC10000)",
-        .execute = PrintInactiveTestArea
-    },
-    {
-        .type = TYPE_COMMAND,
-        .code = 'E',
-        .description = "Erase the test area of the inactive partition (0xC10000)",
-        .execute = EraseInactiveTestArea
-    },
-    {
-        .type = TYPE_COMMAND,
-        .code = 'W',
-        .description = "Write test data to the test area of the inactive partition (0xC10000)",
-        .execute = WriteInactiveTestArea
+        .description = "Write a test area",
+        .execute = WriteTestArea
     },
     {
         .type = TYPE_COMMAND,
@@ -174,17 +116,29 @@ static struct COMMAND commands[] = {
         .description = "Bulk erase the inactive partition",
         .execute = BulkErase
     },
+
+    /* Sequence Number Options */
+    {
+        .type = TYPE_GROUP,
+        .description = "Sequence Number Options",
+    },
+    {
+        .type = TYPE_COMMAND,
+        .code = 's',
+        .description = "Write the sequence number of the active partition",
+        .execute = SequenceNumberActiveUpdate
+    },
     {
         .type = TYPE_COMMAND,
         .code = 'S',
         .description = "Write the sequence number of the inactive partition",
         .execute = SequenceNumberInactiveUpdate
     },
-    
-    // Bootswap, Debug, & Reset Options
+
+    /* System Options */
     {
         .type = TYPE_GROUP,
-        .description = "Bootswap, Debug, & Reset Options",
+        .description = "System Options",
     },
     {
         .type = TYPE_COMMAND,
@@ -204,18 +158,6 @@ static struct COMMAND commands[] = {
         .description = "Issue software RESET",
         .execute = RESET_DeviceReset
     },
-};
-
-static struct FLASH_REGION * const flashRegion[] =
-{
-    &flashRegion0,
-    &flashRegion1,
-    &flashRegion2,
-    &flashRegion3,
-    &flashRegion4,
-    &flashRegion5,
-    &flashRegion6,
-    &flashRegion7,
 };
 
 static void BreakpointDemo(void)
@@ -301,127 +243,6 @@ void COMMAND_Process(void)
         (void)printf("Invalid request.\r\n");
     } else {
         command->execute();
-    }
-}
-
-/*
- * @ingroup  command.c
- * @brief    Checks if the specified region number is valid.
- * @param    regionNum - the region number to check
- * @return   true if the region number is valid, false otherwise
- */
-static bool RegionNumIsValid(uint8_t regionNum)
-{  
-    return (regionNum <= 7U);
-}
-
-/**
- * @ingroup  command.c
- * @brief    Scan user input for a flash region (0-7 allowed)
- * 
- * @param    none
- * @return   none
- */
-static bool GetRegionSelection(uint8_t* regionNum)
-{    
-    (void)printf("Enter the region number (0-7): ");
-    
-    char inputChar = SCAN_Char(true);  // Store the result of SCAN_Char
-    *regionNum = (uint8_t)((uint8_t)inputChar - (uint8_t)'0');  // Convert from ASCII to integer
-    
-    (void)printf("\r\n\r\n");
-    
-    bool isValid = RegionNumIsValid(*regionNum);
-        
-    if(isValid == false)
-    {
-        (void)printf("Invalid region number.\r\n\r\n");
-    }
-
-    return isValid;
-}
-
-/**
- * @ingroup  command.c
- * @brief    Unlocks the specified flash protection region and leaves it
- *           unlocked.
- * 
- * @param    none
- * @return   none
- */
-static void UnlockRegion(void)
-{
-    uint8_t regionNum = 0;
-    bool validInput = GetRegionSelection(&regionNum);
-
-    if(validInput)
-    {
-        struct FLASH_REGION * const region = flashRegion[regionNum];
-        
-        if (region->lockOptionSet(FLASH_PROTECTION_UNLOCKED))
-        {
-            (void)printf("Region %i successfully unlocked.\r\n\r\n", (char)regionNum);
-        } 
-        else
-        {
-            (void)printf("Region %i failed to unlock.\r\n\r\n", (char)regionNum);
-        }
-    }
-}
-
-/**
- * @ingroup  command.c
- * @brief    Locks the specified flash region but the region is still unlockable
- *           with an unlock request.
- * 
- * @param    none
- * @return   none
- */
-static void LockRegion(void)
-{
-    uint8_t regionNum = 0;
-    bool validInput = GetRegionSelection(&regionNum);
-
-    if(validInput)
-    {
-        struct FLASH_REGION * const region = flashRegion[regionNum];
-        
-        if (region->lockOptionSet(FLASH_PROTECTION_LOCKED))
-        {
-            (void)printf("Region %i successfully locked (can be unlocked).\r\n\r\n", regionNum);
-        } 
-        else
-        {
-            (void)printf("Region %i failed to lock.\r\n\r\n", regionNum);
-        }
-    }
-}
-
-/**
- * @ingroup  command.c
- * @brief    Locks the specified flash region until the next reset.  This can't
- *           be unlocked without a reset.
- * 
- * @param    none
- * @return   none
- */
-static void LockRegionUntilReset(void)
-{
-    uint8_t regionNum = 0;
-    bool validInput = GetRegionSelection(&regionNum);
-
-    if(validInput)
-    {
-        struct FLASH_REGION * const region = flashRegion[regionNum];
-        
-        if (region->lockOptionSet(FLASH_PROTECTION_LOCKED_UNTIL_RESET))
-        {
-            (void)printf("Region %i successfully locked until reset.\r\n\r\n", regionNum);
-        } 
-        else
-        {
-            (void)printf("Region %i failed to lock until reset.\r\n\r\n", regionNum);
-        }  
     }
 }
 
