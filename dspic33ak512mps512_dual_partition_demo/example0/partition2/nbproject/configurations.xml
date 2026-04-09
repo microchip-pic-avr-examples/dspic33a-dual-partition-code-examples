@@ -21,19 +21,6 @@
         <itemPath>../shared_code/bsp/task.h</itemPath>
         <itemPath>../shared_code/bsp/board.h</itemPath>
       </logicalFolder>
-      <logicalFolder name="flash_regions"
-                     displayName="flash_regions"
-                     projectFiles="true">
-        <itemPath>../shared_code/flash_regions/flash_region.h</itemPath>
-        <itemPath>../shared_code/flash_regions/flash_region_0.h</itemPath>
-        <itemPath>../shared_code/flash_regions/flash_region_1.h</itemPath>
-        <itemPath>../shared_code/flash_regions/flash_region_2.h</itemPath>
-        <itemPath>../shared_code/flash_regions/flash_region_3.h</itemPath>
-        <itemPath>../shared_code/flash_regions/flash_region_4.h</itemPath>
-        <itemPath>../shared_code/flash_regions/flash_region_5.h</itemPath>
-        <itemPath>../shared_code/flash_regions/flash_region_6.h</itemPath>
-        <itemPath>../shared_code/flash_regions/flash_region_7.h</itemPath>
-      </logicalFolder>
       <logicalFolder name="f1" displayName="mcc_generated_files" projectFiles="true">
         <logicalFolder name="f1" displayName="flash" projectFiles="true">
           <itemPath>../shared_code/mcc_generated_files/flash/flash_interface.h</itemPath>
@@ -97,18 +84,6 @@
         <itemPath>../shared_code/bsp/s3.c</itemPath>
         <itemPath>../shared_code/bsp/task.c</itemPath>
         <itemPath>../shared_code/bsp/board.c</itemPath>
-      </logicalFolder>
-      <logicalFolder name="flash_regions"
-                     displayName="flash_regions"
-                     projectFiles="true">
-        <itemPath>../shared_code/flash_regions/flash_region_0.c</itemPath>
-        <itemPath>../shared_code/flash_regions/flash_region_1.c</itemPath>
-        <itemPath>../shared_code/flash_regions/flash_region_2.c</itemPath>
-        <itemPath>../shared_code/flash_regions/flash_region_3.c</itemPath>
-        <itemPath>../shared_code/flash_regions/flash_region_4.c</itemPath>
-        <itemPath>../shared_code/flash_regions/flash_region_5.c</itemPath>
-        <itemPath>../shared_code/flash_regions/flash_region_6.c</itemPath>
-        <itemPath>../shared_code/flash_regions/flash_region_7.c</itemPath>
       </logicalFolder>
       <logicalFolder name="mcc_generated_files"
                      displayName="mcc_generated_files"

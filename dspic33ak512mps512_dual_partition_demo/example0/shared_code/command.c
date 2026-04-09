@@ -50,15 +50,6 @@
 #include "flash_region_info.h"
 #include "sequence_info.h"
 #include "test_area_demo.h"
-#include "flash_regions/flash_region.h"
-#include "flash_regions/flash_region_0.h"
-#include "flash_regions/flash_region_1.h"
-#include "flash_regions/flash_region_2.h"
-#include "flash_regions/flash_region_3.h"
-#include "flash_regions/flash_region_4.h"
-#include "flash_regions/flash_region_5.h"
-#include "flash_regions/flash_region_6.h"
-#include "flash_regions/flash_region_7.h"
 
 /******************************************************************************/
 /* Extern Function Prototypes                                                 */
