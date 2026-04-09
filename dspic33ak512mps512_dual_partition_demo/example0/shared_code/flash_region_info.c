@@ -48,19 +48,13 @@
 #include "flash_regions/flash_region_6.h"
 #include "flash_regions/flash_region_7.h"
 
-#define FLASH_REGION_NUMBER_OF_REGIONS 8U
+#define FLASH_REGION_NUMBER_OF_REGIONS 4U
 
 #define FLASHREGION_NUMBER_WIDTH 6U
 #define FLASHREGION_PARTITION_WIDTH 12U
 #define FLASHREGION_TYPE_WIDTH 11U
 #define FLASHREGION_ADDRESS_WIDTH 19U
-#define FLASHREGION_LOCK_STATUS_WIDTH 11U
 #define FLASHREGION_WRITE_WIDTH 13U
-
-#define FLASH_REGION_LOCK_MASK 0x00000003UL
-#define FLASH_REGION_LOCKED 0x00000000UL
-#define FLASH_REGION_LOCKED_UNTIL_RESET 0x00000001UL
-#define FLASH_REGION_UNLOCKED 0x00000003UL
 
 #define FLASH_ACTIVE_SPACE_BASE 0x800000UL
 #define FLASH_INACTIVE_SPACE_BASE 0xC00000UL
@@ -74,9 +68,7 @@ static void FlashRegionSeparatorPrint(void);
 static uint32_t FlashRegionTypeGet(uint8_t regionNumber);
 static uint32_t FlashRegionStartFieldGet(uint8_t regionNumber);
 static uint32_t FlashRegionEndFieldGet(uint8_t regionNumber);
-static uint32_t FlashRegionLockGet(uint8_t regionNumber);
 static const char *FlashRegionTypeStringGet(uint8_t regionNumber);
-static const char *FlashRegionLockStatusStringGet(uint8_t regionNumber);
 static uint32_t FlashRegionAddressBuild(uint32_t addressField, bool activeSpace);
 static void FlashRegionAddressStringGet(struct FLASH_REGION *const region,
                                         uint32_t addressField,
@@ -176,8 +168,6 @@ static void FlashRegionSeparatorPrint(void)
     PrintRepeatedChar('-', FLASHREGION_ADDRESS_WIDTH);
     (void)printf(" | ");
     PrintRepeatedChar('-', FLASHREGION_ADDRESS_WIDTH);
-    (void)printf(" | ");
-    PrintRepeatedChar('-', FLASHREGION_LOCK_STATUS_WIDTH);
     (void)printf(" | ");
     PrintRepeatedChar('-', FLASHREGION_WRITE_WIDTH);
     (void)printf("\r\n");
@@ -281,38 +271,6 @@ static uint32_t FlashRegionEndFieldGet(uint8_t regionNumber)
 
 /**
  * @ingroup  menu.c
- * @brief    Gets the LOCK register value of the specified flash region.
- *
- * @param    regionNumber - flash region number
- * @return   uint32_t - lock register value
- */
-static uint32_t FlashRegionLockGet(uint8_t regionNumber)
-{
-    switch (regionNumber)
-    {
-    case 0U:
-        return PR0LOCK;
-    case 1U:
-        return PR1LOCK;
-    case 2U:
-        return PR2LOCK;
-    case 3U:
-        return PR3LOCK;
-    case 4U:
-        return PR4LOCK;
-    case 5U:
-        return PR5LOCK;
-    case 6U:
-        return PR6LOCK;
-    case 7U:
-        return PR7LOCK;
-    default:
-        return 0U;
-    }
-}
-
-/**
- * @ingroup  menu.c
  * @brief    Returns the flash region type string.
  *
  * @param    regionNumber - flash region number
@@ -332,33 +290,6 @@ static const char *FlashRegionTypeStringGet(uint8_t regionNumber)
 
     case 0x3U:
         return "FIRMWARE";
-
-    default:
-        return "UNKNOWN";
-    }
-}
-
-/**
- * @ingroup  menu.c
- * @brief    Returns the flash region lock status string.
- *
- * @param    regionNumber - flash region number
- * @return   const char* - lock status string
- */
-static const char *FlashRegionLockStatusStringGet(uint8_t regionNumber)
-{
-    uint32_t lockValue = FlashRegionLockGet(regionNumber) & FLASH_REGION_LOCK_MASK;
-
-    switch (lockValue)
-    {
-    case FLASH_REGION_LOCKED:
-        return "Locked";
-
-    case FLASH_REGION_LOCKED_UNTIL_RESET:
-        return "Until Reset";
-
-    case FLASH_REGION_UNLOCKED:
-        return "Unlocked";
 
     default:
         return "UNKNOWN";
@@ -442,7 +373,7 @@ static void FlashRegionAddressStringGet(struct FLASH_REGION *const region,
 /**
  * @ingroup  menu.c
  * @brief    Prints information about all flash regions, including partition,
- *           partition, type, start/end addresses, lock status, and write
+ *           partition, type, start/end addresses, and write
  *           enable status.
  *
  * @param    none
@@ -455,14 +386,13 @@ void FlashRegionInfoPrint(void)
     char endAddressString[24];
 
     (void)printf("  Flash Regions\r\n");
-    (void)printf("  -------------------------------------------------------------------------------------------------------------\r\n");
-    (void)printf("  %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s\r\n",
+    (void)printf("  -----------------------------------------------------------------------------------------------\r\n");
+    (void)printf("  %-*s | %-*s | %-*s | %-*s | %-*s | %-*s\r\n",
                  FLASHREGION_NUMBER_WIDTH, "NUMBER",
                  FLASHREGION_PARTITION_WIDTH, "PARTITION",
                  FLASHREGION_TYPE_WIDTH, "REGION TYPE",
                  FLASHREGION_ADDRESS_WIDTH, "START ADDRESS",
                  FLASHREGION_ADDRESS_WIDTH, "END ADDRESS",
-                 FLASHREGION_LOCK_STATUS_WIDTH, "LOCK STATUS",
                  FLASHREGION_WRITE_WIDTH, "WRITE ENABLED");
 
     FlashRegionSeparatorPrint();
@@ -479,13 +409,12 @@ void FlashRegionInfoPrint(void)
                                     endAddressString,
                                     sizeof(endAddressString));
 
-        (void)printf("  %-*u | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s\r\n",
+        (void)printf("  %-*u | %-*s | %-*s | %-*s | %-*s | %-*s\r\n",
                      FLASHREGION_NUMBER_WIDTH, (unsigned int)i,
                      FLASHREGION_PARTITION_WIDTH, FlashRegionPartitionStringGet(flashRegion[i]),
                      FLASHREGION_TYPE_WIDTH, FlashRegionTypeStringGet(i),
                      FLASHREGION_ADDRESS_WIDTH, startAddressString,
                      FLASHREGION_ADDRESS_WIDTH, endAddressString,
-                     FLASHREGION_LOCK_STATUS_WIDTH, FlashRegionLockStatusStringGet(i),
                      FLASHREGION_WRITE_WIDTH, flashRegion[i]->isWriteEnabled() ? "true" : "false");
     }
 }
