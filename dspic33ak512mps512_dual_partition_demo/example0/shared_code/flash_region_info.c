@@ -36,6 +36,8 @@
 
 #include <xc.h>
 
+#include "mcc_generated_files/flash/flash_types.h"
+
 #include "partition.h"
 #include "flash_region_info.h"
 
@@ -50,12 +52,28 @@
 #define FLASH_ACTIVE_SPACE_BASE 0x800000UL
 #define FLASH_INACTIVE_SPACE_BASE 0xC00000UL
 
+#define FLASH_REGION_0_TEST_CODE_ADDRESS 0x810000UL
+#define FLASH_REGION_2_TEST_CODE_ADDRESS 0x812000UL
+#define FLASH_REGION_3_TEST_CODE_ADDRESS 0xC12000UL
+
+
 enum PANEL
 {
     PANEL_1 = 0,
     PANEL_2,
     PANEL_BOTH
 };
+
+/* Reserve flash test blocks used for testing. These placeholder objects prevent application code from being linked into
+ * the test ranges. The configuration bits define the test areas as follows:
+ * Region 0: 0x810000-0x811FFF (Both Partitions)
+ * Region 1: 0x811000-0x811FFF (Partition 2)
+ * Region 2: 0x812000-0x812FFF (Partition 1)
+ * Region 3: 0x812000-0x812FFF (Partition 2)
+ */
+static const volatile uint32_t flashRegion0and1TestReserve[(FLASH_ERASE_PAGE_SIZE_IN_INSTRUCTIONS * 2U) - 1U] __attribute__((address(FLASH_REGION_0_TEST_CODE_ADDRESS + 4U), space(prog), keep, used)) = {0};
+static const volatile uint32_t flashRegion2TestReserve[FLASH_ERASE_PAGE_SIZE_IN_INSTRUCTIONS - 1U] __attribute__((address(FLASH_REGION_2_TEST_CODE_ADDRESS + 4U), space(prog), keep, used)) = {0};
+static const volatile uint32_t flashRegion3TestReserve[FLASH_ERASE_PAGE_SIZE_IN_INSTRUCTIONS - 1U] __attribute__((address(FLASH_REGION_3_TEST_CODE_ADDRESS + 4U), space(prog), keep, used)) = {0};
 
 /******************************************************************************/
 /* Private Function Prototypes                                                */
