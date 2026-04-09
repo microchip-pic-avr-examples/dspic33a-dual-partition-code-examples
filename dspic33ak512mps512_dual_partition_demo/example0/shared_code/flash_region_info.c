@@ -57,11 +57,11 @@
 #define FLASH_REGION_3_TEST_CODE_ADDRESS 0xC12000UL
 
 
-enum PANEL
+enum PARTITION
 {
-    PANEL_1 = 0,
-    PANEL_2,
-    PANEL_BOTH
+    PARTITION_1 = 0,
+    PARTITION_2,
+    PARTITION_BOTH
 };
 
 /* Reserve flash test blocks used for testing. These placeholder objects prevent application code from being linked into
@@ -81,12 +81,12 @@ static const volatile uint32_t flashRegion3TestReserve[FLASH_ERASE_PAGE_SIZE_IN_
 static const char *FlashRegionPartitionStringGet(uint8_t regionNumber);
 static void PrintRepeatedChar(char ch, uint8_t count);
 static void FlashRegionSeparatorPrint(void);
-static uint32_t FlashRegionPanelSelectGet(uint8_t regionNumber);
+static uint32_t FlashRegionPartitionSelectGet(uint8_t regionNumber);
 static uint32_t FlashRegionWriteEnableGet(uint8_t regionNumber);
 static uint32_t FlashRegionTypeGet(uint8_t regionNumber);
 static uint32_t FlashRegionStartFieldGet(uint8_t regionNumber);
 static uint32_t FlashRegionEndFieldGet(uint8_t regionNumber);
-static enum PANEL FlashRegionPanelGet(uint8_t regionNumber);
+static enum PARTITION FlashRegionPartitionGet(uint8_t regionNumber);
 static bool FlashRegionIsWriteEnabled(uint8_t regionNumber);
 static const char *FlashRegionTypeStringGet(uint8_t regionNumber);
 static uint32_t FlashRegionAddressBuild(uint32_t addressField, bool activeSpace);
@@ -98,24 +98,24 @@ static void FlashRegionAddressStringGet(uint8_t regionNumber,
 /*
  * @ingroup  menu.c
  * @brief    Returns the flash region partition string based on the region's
- *           panel assignment and the active partition.
+ *           partition assignment and the active partition.
  *
  * @param    regionNumber - flash region number
  * @return   const char* - flash region partition string
  */
 static const char *FlashRegionPartitionStringGet(uint8_t regionNumber)
 {
-    enum PANEL panel = FlashRegionPanelGet(regionNumber);
+    enum PARTITION partition = FlashRegionPartitionGet(regionNumber);
     const char *result = "BOTH";
 
-    if(panel == PANEL_BOTH)
+    if(partition == PARTITION_BOTH)
     {
         result = "BOTH";
     }
-    else if(((panel == PANEL_1) && (PARTITION_ActiveGet() == 1U)) ||
-            ((panel == PANEL_2) && (PARTITION_ActiveGet() == 2U)))
+    else if(((partition == PARTITION_1) && (PARTITION_ActiveGet() == 1U)) ||
+            ((partition == PARTITION_2) && (PARTITION_ActiveGet() == 2U)))
     {
-        if(panel == PANEL_1)
+        if(partition == PARTITION_1)
         {
             result = "1 (ACTIVE)";
         }
@@ -126,7 +126,7 @@ static const char *FlashRegionPartitionStringGet(uint8_t regionNumber)
     }
     else
     {
-        if(panel == PANEL_1)
+        if(partition == PARTITION_1)
         {
             result = "1 (INACTIVE)";
         }
@@ -188,42 +188,42 @@ static void FlashRegionSeparatorPrint(void)
  * @param    regionNumber - flash region number
  * @return   uint32_t - PSEL field
  */
-static uint32_t FlashRegionPanelSelectGet(uint8_t regionNumber)
+static uint32_t FlashRegionPartitionSelectGet(uint8_t regionNumber)
 {
-    uint32_t panelSelect = 0U;
+    uint32_t partitionSelect = 0U;
 
     switch(regionNumber)
     {
         case 0U:
-            panelSelect = PR0CTRLbits.PSEL;
+            partitionSelect = PR0CTRLbits.PSEL;
             break;
         case 1U:
-            panelSelect = PR1CTRLbits.PSEL;
+            partitionSelect = PR1CTRLbits.PSEL;
             break;
         case 2U:
-            panelSelect = PR2CTRLbits.PSEL;
+            partitionSelect = PR2CTRLbits.PSEL;
             break;
         case 3U:
-            panelSelect = PR3CTRLbits.PSEL;
+            partitionSelect = PR3CTRLbits.PSEL;
             break;
         case 4U:
-            panelSelect = PR4CTRLbits.PSEL;
+            partitionSelect = PR4CTRLbits.PSEL;
             break;
         case 5U:
-            panelSelect = PR5CTRLbits.PSEL;
+            partitionSelect = PR5CTRLbits.PSEL;
             break;
         case 6U:
-            panelSelect = PR6CTRLbits.PSEL;
+            partitionSelect = PR6CTRLbits.PSEL;
             break;
         case 7U:
-            panelSelect = PR7CTRLbits.PSEL;
+            partitionSelect = PR7CTRLbits.PSEL;
             break;
         default:
-            panelSelect = 0U;
+            partitionSelect = 0U;
             break;
     }
 
-    return panelSelect;
+    return partitionSelect;
 }
 
 /**
@@ -408,33 +408,33 @@ static uint32_t FlashRegionEndFieldGet(uint8_t regionNumber)
 
 /**
  * @ingroup  menu.c
- * @brief    Returns the panel assignment for the specified flash region.
+ * @brief    Returns the partition assignment for the specified flash region.
  *
  * @param    regionNumber - flash region number
- * @return   enum PANEL - panel assignment
+ * @return   enum PARTITION - partition assignment
  */
-static enum PANEL FlashRegionPanelGet(uint8_t regionNumber)
+static enum PARTITION FlashRegionPartitionGet(uint8_t regionNumber)
 {
-    enum PANEL panel = PANEL_BOTH;
-    uint32_t panelSelect = FlashRegionPanelSelectGet(regionNumber);
+    enum PARTITION partition = PARTITION_BOTH;
+    uint32_t partitionSelect = FlashRegionPartitionSelectGet(regionNumber);
 
-    switch(panelSelect)
+    switch(partitionSelect)
     {
         case 0x1U:
-            panel = PANEL_1;
+            partition = PARTITION_1;
             break;
         case 0x2U:
-            panel = PANEL_2;
+            partition = PARTITION_2;
             break;
         case 0x3U:
-            panel = PANEL_BOTH;
+            partition = PARTITION_BOTH;
             break;
         default:
-            panel = PANEL_BOTH;
+            partition = PARTITION_BOTH;
             break;
     }
 
-    return panel;
+    return partition;
 }
 
 /**
@@ -526,9 +526,9 @@ static void FlashRegionAddressStringGet(uint8_t regionNumber,
                                         char *buffer,
                                         size_t bufferSize)
 {
-    enum PANEL panel = FlashRegionPanelGet(regionNumber);
+    enum PARTITION partition = FlashRegionPartitionGet(regionNumber);
 
-    if(panel == PANEL_BOTH)
+    if(partition == PARTITION_BOTH)
     {
         uint32_t activeAddress = FlashRegionAddressBuild(addressField, true);
         uint32_t inactiveAddress = FlashRegionAddressBuild(addressField, false);
@@ -539,8 +539,8 @@ static void FlashRegionAddressStringGet(uint8_t regionNumber,
                        (unsigned long)activeAddress,
                        (unsigned long)inactiveAddress);
     }
-    else if(((panel == PANEL_1) && (PARTITION_ActiveGet() == 1U)) ||
-            ((panel == PANEL_2) && (PARTITION_ActiveGet() == 2U)))
+    else if(((partition == PARTITION_1) && (PARTITION_ActiveGet() == 1U)) ||
+            ((partition == PARTITION_2) && (PARTITION_ActiveGet() == 2U)))
     {
         uint32_t activeAddress = FlashRegionAddressBuild(addressField, true);
 

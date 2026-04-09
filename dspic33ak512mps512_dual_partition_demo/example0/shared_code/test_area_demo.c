@@ -408,7 +408,7 @@ void PrintTestArea(void)
 
 /**
  * @ingroup  command.c
- * @brief    Issues a bulk/panel/partition erase on the inactive partition.
+ * @brief    Issues a bulk erase on the inactive partition.
  *
  * @param    none
  * @return   none
