@@ -32,14 +32,14 @@ In this part, we will switch which partition is the active partition by updating
 
 1. Compile and program the example.
 2. With the terminal window selected, enter capital 'S'.  
-3. Type the following sequence: 'FFC003'.  This will change the sequence number of the inactive panel to '3'.  This will be lower than the current sequence number in partition 1.<br>![Figure 5](images/lab1_figure5.png)
+3. Type the following sequence: 'FFC003'.  This will change the sequence number of the inactive partition to '3'.  This will be lower than the current sequence number in partition 1.<br>![Figure 5](images/lab1_figure5.png)
 4. Note that the inactive partition, partition 2, now has the sequence number 'FFC003'<br>![Figure 6](images/lab1_figure6.png)
-5. Reset the device by either pressing the reset button or the 'r' key in the terminal. Note that on reset, partition 2 is now the active partition. The lowest sequence number is the panel that will start on reset.<br>![Figure 7](images/lab1_figure7.png)
+5. Reset the device by either pressing the reset button or the 'r' key in the terminal. Note that on reset, partition 2 is now the active partition. The lowest sequence number is the partition that will start on reset.<br>![Figure 7](images/lab1_figure7.png)
 
 Because partition 2 has the lower sequence number, on reset it automatically becomes the active partition.
 
 6. Enter capital 'S' again to update the inactive partition sequence number (partition 1 is inactive).
-7. Type the following sequence: 'FFD002'.  This will change the sequence number of the inactive panel to '2'.<br>![Figure 8](images/lab1_figure8.png)
+7. Type the following sequence: 'FFD002'.  This will change the sequence number of the inactive partition to '2'.<br>![Figure 8](images/lab1_figure8.png)
 8. Reset the board by pressing the MCLR button or the 'r' key in the terminal.  Note that on reset, partition 1 is the active partition.<br>![Figure 9](images/lab1_figure9.png)
 
 In this section, we saw how the lowest sequence number of the two partitions becomes the active partition after a reset.  We can change which partition is active based on how these sequence numbers are programmed into the last 128-bits of the partition memory.
@@ -53,7 +53,7 @@ Each sequence number is made up of BTSEQn, IBTSEQn, and padding to form a valid 
 4. Reset the board by pressing the MCLR button or the 'r' key in the terminal.  Note that on reset, partition 1 is still the active partition.  Even though the number is lower, because the sequence check fails, partition 1 is the active partition.<br>![Figure 11](images/lab1_figure11.png)
 
 5. Enter capital 'S' to update the inactive partition sequence number (partition 2 is inactive)
-6. Type the following sequence: 'FFE001'.  This will change the sequence number of the inactive panel to '1'.<br>![Figure 12](images/lab1_figure12.png)
+6. Type the following sequence: 'FFE001'.  This will change the sequence number of the inactive partition to '1'.<br>![Figure 12](images/lab1_figure12.png)
 7. Reset the board by pressing the MCLR button or the 'r' key in the terminal.  Note that on reset, partition 2 is the active partition.<br>![Figure 13](images/lab1_figure13.png)
 
 This shows how the lowest valid sequence number is used to determine the active partition on reset.  
@@ -63,7 +63,7 @@ This section demonstrates how equal partition numbers are handled.  When the seq
 
 1. Compile and program the example.
 2. Enter capital 'S' to update the inactive partition sequence number (partition 2 is inactive)
-3. Type the following sequence: 'FFB004'.  This will change the sequence number of the inactive panel to '4'.  Note that the sequence number of both partitions are identical and that partition 2 is the current active partition.<br>![Figure 14](images/lab1_figure14.png)
+3. Type the following sequence: 'FFB004'.  This will change the sequence number of the inactive partition to '4'.  Note that the sequence number of both partitions are identical and that partition 2 is the current active partition.<br>![Figure 14](images/lab1_figure14.png)
 4. Reset the board by pressing the MCLR button or the 'r' key in the terminal.  Note that on reset, partition 1 is now the active partition.  In the case of a tie of valid sequence numbers, partition 1 is the default partition.<br>![Figure 15](images/lab1_figure15.png)
 
 ### Additional Exploration
