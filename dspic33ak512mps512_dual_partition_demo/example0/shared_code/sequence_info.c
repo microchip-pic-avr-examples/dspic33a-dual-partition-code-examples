@@ -92,7 +92,7 @@ static void SequenceNumberUpdate(flash_adr_t page, flash_adr_t address)
     (void)printf("\r\nEnter a 24-bit sequence number (IBTSEQn + BTSEQn): ");
     if(SCAN_Hex((uint8_t*)&sequenceNumber, 6U, true))
     {
-        uint32_t sequenceNumberArray[4] = {0U, 0U, 0U, 0U};
+        uint32_t sequenceNumberArray[4] = {0};
 
         sequenceNumberArray[0] = sequenceNumber;
         (void)FLASH_PageErase(page, FLASH_UNLOCK_KEY);
