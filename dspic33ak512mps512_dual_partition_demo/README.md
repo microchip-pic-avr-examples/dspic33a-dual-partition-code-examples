@@ -127,7 +127,7 @@ UCB is shared by partitions 1 and 2 while UCA and UCAI are either UCA1 (User Con
 
 #### Flash Protection Regions 
 
-In this example, 7 Flash Protection Regions (PR0-PR7) have been defined and enabled in order to demonstrate the various protection scenarios when in dual panel mode. These regions are defined in Partition 1's config_bits.c file. As noted above, flash protection region configurations are mapped to UCB, therefore these configurations are valid for both Partition 1 and Partition 2. The regions are configured as follows: 
+In this example, 4 Flash Protection Regions (PR0-PR3) have been defined and enabled in order to demonstrate the various protection scenarios when in dual panel mode. These regions are defined in Partition 1's config_bits.c file. As noted above, flash protection region configurations are mapped to UCB, therefore these configurations are valid for both Partition 1 and Partition 2. The regions are configured as follows: 
 
 **PR0** 
 * FPR0CTRL:
@@ -135,30 +135,30 @@ In this example, 7 Flash Protection Regions (PR0-PR7) have been defined and enab
     * Type: Firmware 
     * Read: Enabled 
     * Execute: Enabled
-    * Write: Disabled
+    * Write: Enabled
 * FPR0ST/FPR0END:
-    * Address Range (inclusive): 0x802000 - 0x802FFF
+    * Address Range (inclusive): 0x810000 - 0x811FFF
 
 
 **PR1**
 * FPR1CTRL:
-    * Partition Select: Panel 1
+    * Partition Select: Panel 2
     * Type: Firmware 
     * Read: Enabled 
     * Execute: Enabled
     * Write: Disabled
 * FPR1ST/FPR1END:
-    * Address Range (inclusive): 0x803000 - 0x803FFF
+    * Address Range (inclusive): 0x811000 - 0x811FFF
 
 **PR2**
 * FPR2CTRL:
     * Partition Select: Panel 1
-    * Type: IRT 
+    * Type: Firmwaer
     * Read: Enabled 
     * Execute: Enabled
-    * Write: Disabled
+    * Write: Enabled
 * FPR2ST/FPR2END:
-    * Address Range (inclusive): 0x806000 - 0x806FFF
+    * Address Range (inclusive): 0x812000 - 0x812FFF
 
 **PR3**
 * FPR3CTRL:
@@ -166,51 +166,11 @@ In this example, 7 Flash Protection Regions (PR0-PR7) have been defined and enab
     * Type: Firmware 
     * Read: Enabled 
     * Execute: Enabled
-    * Write: Enabled
+    * Write: Disabled
 * FPR3ST/FPR3END:
-    * Address Range (inclusive): 0x802000 - 0x802FFF
+    * Address Range (inclusive): 0x812000 - 0x812FFF
 
-**PR4**
-* FPR4CTRL:
-    * Partition Select: Panel 2
-    * Type: Firmware 
-    * Read: Enabled 
-    * Execute: Enabled
-    * Write: Enabled
-* FPR4ST/FPR4END:
-    * Address Range (inclusive): 0x803000 - 0x803FFF
-
-**PR5**
-* FPR5CTRL:
-    * Partition Select: Panel 2
-    * Type: Firmware 
-    * Read: Enabled 
-    * Execute: Enabled
-    * Write: Disabled
-* FPR5ST/FPR5END
-    * Address Range (inclusive): 0x805000 - 0x805FFF
-
-**PR6**
-* FPR6CTRL:
-    * Partition Select: Panel 2
-    * Type: IRT 
-    * Read: Enabled 
-    * Execute: Enabled
-    * Write: Disabled
-* FPR6ST/FPR6END
-    * Address Range (inclusive): 0x806000 - 0x807FFF
-
-**PR7**
-* FPR7CTRL:
-    * Partition Select: Both
-    * Type: Firmware 
-    * Read: Enabled 
-    * Execute: Enabled
-    * Write: Disabled
-* FPR7ST/FPR7END
-    * Address Range (inclusive): 0x80C000 - 0x80FFFF
-
-The FPRnCTRL, FPRnST, and FPRnEND configuration bits are copied into the PRnCTRL, PRnST, and PRnEND SFRs on reset, respectively. PR0, PR1, PR3, PR4, PR5, and PR7 are set as Firmware, which allows for region locking/unlocking and permissions updates. PR2 and PR6 are set as IRT (Immutable Root of Trust) which prevents unlocking and permission updates. 
+The FPRnCTRL, FPRnST, and FPRnEND configuration bits are copied into the PRnCTRL, PRnST, and PRnEND SFRs on reset, respectively. PR0, PR1, PR2, and PR3 are set as Firmware, which allows for region locking/unlocking and permissions updates. 
 
 ![Flash Protection Region Configuration](./images/flashRegionAddresses.jpg)<br>
 _Figure 10. - Flash Protection Region Configuration_<br>
@@ -279,10 +239,10 @@ _Figure 14. - Copy & Erase Options_<br>
 
 The 'c' command will erase the Inactive Partition and copy the code from the Active Partition to the Inactive Partition. This may be useful if, during testing, parts of the Inactive Partition were erased. Note that this will not be successful if the Inactive Partition or both partitions have active write/erase protections enabled.
 
-The 'e' command erases a page from a flash protection region. When entered, the terminal will prompt for a flash region (0-7). If a page from that region can be erased, a success message will be displayed. This will fail if:
+The 'e' command erases a page from a test area in a flash protection region. When entered, the terminal will prompt for an address range option (1-6). If a page from that region can be erased, a success message will be displayed. This will fail if:
 
 1. A region is set as IRT and has write protections enabled. 
-2. A region is writable; however it overlaps with another region that is write protected. For example, an attempt to erase a page from PR3 will fail despite PR3 being writable, since PR0 covers the same memory addresses and is write protected. 
+2. A region is writable; however it overlaps with another region that is write protected. For example, an attempt to erase a page from 0x811000-0x811FFF of PR0 will fail despite PR0 being writable, since PR1 covers the same memory addresses and is write protected. 
 
 ![Flash Region Overlap](./images/eraseProtectionOverlap.jpg)<br>
 _Figure 15. - Flash Region Overlap_<br>
