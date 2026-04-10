@@ -192,7 +192,7 @@ void MENU_Print(void)
     
     for(size_t i=0; i<(sizeof(commands)/sizeof(struct COMMAND)); i++)
     {
-        struct COMMAND* command = &commands[i];
+        const struct COMMAND* command = &commands[i];
         
         if(command->type == TYPE_GROUP){
             (void)printf("\r\n");
@@ -224,7 +224,7 @@ void COMMAND_Process(void)
     (void)printf("\r\n\r\n");
 
     for(size_t i=0; i<(sizeof(commands)/sizeof(struct COMMAND)); i++) {
-        if(commands[i].code == command_code) {
+        if(commands[i].code == (char)command_code) {
             command = &commands[i];
             break;
         }

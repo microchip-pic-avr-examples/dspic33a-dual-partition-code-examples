@@ -92,7 +92,7 @@ static void SequenceNumberUpdate(flash_adr_t page, flash_adr_t address)
     (void)printf("\r\nEnter a 24-bit sequence number (IBTSEQn + BTSEQn): ");
     if(SCAN_Hex((uint8_t*)&sequenceNumber, 6U, true))
     {
-        uint32_t sequenceNumberArray[4] = {0U};
+        uint32_t sequenceNumberArray[4] = {0};
 
         sequenceNumberArray[0] = sequenceNumber;
         (void)FLASH_PageErase(page, FLASH_UNLOCK_KEY);
@@ -183,7 +183,7 @@ static void SequenceInfoGet(uint32_t address, struct SEQUENCE_INFO *info)
      *  outside of active partition, there is no way to create an object at
      *  that address to reference so an integer address is used.
      */
-    memcpy(sequenceCode, (void*)address, sizeof(sequenceCode));
+    (void)memcpy(sequenceCode, (void*)address, sizeof(sequenceCode));
 
     info->address = address;
     info->sequenceNumber = (uint16_t)(sequenceCode[0] & 0xFFFU);
@@ -200,14 +200,8 @@ static void SequenceInfoGet(uint32_t address, struct SEQUENCE_INFO *info)
  */
 static const char* ValidStringGet(bool valid)
 {
-    if(valid)
-    {
-        return "Valid";
-    }
-    else
-    {
-        return "Invalid";
-    }
+    const char* result = valid ? "Valid" : "Invalid";
+    return result;
 }
 
 /**

@@ -71,9 +71,9 @@ enum PARTITION
  * Region 2: 0x812000-0x812FFF (Partition 1)
  * Region 3: 0x812000-0x812FFF (Partition 2)
  */
-static const volatile uint32_t flashRegion0and1TestReserve[(FLASH_ERASE_PAGE_SIZE_IN_INSTRUCTIONS * 2U) - 1U] __attribute__((address(FLASH_REGION_0_TEST_CODE_ADDRESS + 4U), space(prog), keep, used)) = {0};
-static const volatile uint32_t flashRegion2TestReserve[FLASH_ERASE_PAGE_SIZE_IN_INSTRUCTIONS - 1U] __attribute__((address(FLASH_REGION_2_TEST_CODE_ADDRESS + 4U), space(prog), keep, used)) = {0};
-static const volatile uint32_t flashRegion3TestReserve[FLASH_ERASE_PAGE_SIZE_IN_INSTRUCTIONS - 1U] __attribute__((address(FLASH_REGION_3_TEST_CODE_ADDRESS + 4U), space(prog), keep, used)) = {0};
+static const volatile uint32_t flashRegion0and1TestReserve[(FLASH_ERASE_PAGE_SIZE_IN_INSTRUCTIONS * 2U) - 1U] __attribute__((address(FLASH_REGION_0_TEST_CODE_ADDRESS), space(prog), keep, used)) = {0};
+static const volatile uint32_t flashRegion2TestReserve[FLASH_ERASE_PAGE_SIZE_IN_INSTRUCTIONS - 1U] __attribute__((address(FLASH_REGION_2_TEST_CODE_ADDRESS), space(prog), keep, used)) = {0};
+static const volatile uint32_t flashRegion3TestReserve[FLASH_ERASE_PAGE_SIZE_IN_INSTRUCTIONS - 1U] __attribute__((address(FLASH_REGION_3_TEST_CODE_ADDRESS), space(prog), keep, used)) = {0};
 
 /******************************************************************************/
 /* Private Function Prototypes                                                */

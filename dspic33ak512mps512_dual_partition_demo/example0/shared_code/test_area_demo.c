@@ -91,16 +91,6 @@ static const struct TEST_AREA_RANGE writeRanges[TEST_AREA_RANGE_COUNT] =
     {6U, 0xC12000UL, 0xC120FFUL, "Inactive"},
 };
 
-static const struct TEST_AREA_RANGE eraseRanges[TEST_AREA_RANGE_COUNT] =
-{
-    {1U, 0x810000UL, 0x810FFFUL, "Active"},
-    {2U, 0x811000UL, 0x811FFFUL, "Active"},
-    {3U, 0x812000UL, 0x812FFFUL, "Active"},
-    {4U, 0xC10000UL, 0xC10FFFUL, "Inactive"},
-    {5U, 0xC11000UL, 0xC11FFFUL, "Inactive"},
-    {6U, 0xC12000UL, 0xC12FFFUL, "Inactive"},
-};
-
 /**
  * @ingroup  command.c
  * @brief    Prints a block of memory from the specified address.
@@ -128,7 +118,7 @@ static void PrintRegion(uint32_t address, uint16_t byteCount)
      *  Reasoning: This reads flash memory contents at a specified address
      *  for terminal display.
      */
-    memcpy(data, (void*)address, bytesToPrint);
+    (void)memcpy(data, (void*)address, bytesToPrint);
 
     for(i = 0U; i < bytesToPrint; i++)
     {
@@ -269,39 +259,52 @@ static void WritePatternToRange(const struct TEST_AREA_RANGE *range)
 {
     flash_data_t data[WRITE_RANGE_SIZE_BYTES / 4U] =
     {
-        0x00010203, 0x04050607, 0x08090A0B, 0x0C0D0E0F,
-        0x10111213, 0x14151617, 0x18191A1B, 0x1C1D1E1F,
-        0x20212223, 0x24252627, 0x28292A2B, 0x2C2D2E2F,
-        0x30313233, 0x34353637, 0x38393A3B, 0x3C3D3E3F,
-        0x40414243, 0x44454647, 0x48494A4B, 0x4C4D4E4F,
-        0x50515253, 0x54555657, 0x58595A5B, 0x5C5D5E5F,
-        0x60616263, 0x64656667, 0x68696A6B, 0x6C6D6E6F,
-        0x70717273, 0x74757677, 0x78797A7B, 0x7C7D7E7F,
-        0x80818283, 0x84858687, 0x88898A8B, 0x8C8D8E8F,
-        0x90919293, 0x94959697, 0x98999A9B, 0x9C9D9E9F,
-        0xA0A1A2A3, 0xA4A5A6A7, 0xA8A9AAAB, 0xACADAEAF,
-        0xB0B1B2B3, 0xB4B5B6B7, 0xB8B9BABB, 0xBCBDBEBF,
-        0xC0C1C2C3, 0xC4C5C6C7, 0xC8C9CACB, 0xCCCDCECF,
-        0xD0D1D2D3, 0xD4D5D6D7, 0xD8D9DADB, 0xDCDDDEDF,
-        0xE0E1E2E3, 0xE4E5E6E7, 0xE8E9EAEB, 0xECEDEEEF,
-        0xF0F1F2F3, 0xF4F5F6F7, 0xF8F9FAFB, 0xFCFDFEFF
+        0x00010203UL, 0x04050607UL, 0x08090A0BUL, 0x0C0D0E0FUL,
+        0x10111213UL, 0x14151617UL, 0x18191A1BUL, 0x1C1D1E1FUL,
+        0x20212223UL, 0x24252627UL, 0x28292A2BUL, 0x2C2D2E2FUL,
+        0x30313233UL, 0x34353637UL, 0x38393A3BUL, 0x3C3D3E3FUL,
+        0x40414243UL, 0x44454647UL, 0x48494A4BUL, 0x4C4D4E4FUL,
+        0x50515253UL, 0x54555657UL, 0x58595A5BUL, 0x5C5D5E5FUL,
+        0x60616263UL, 0x64656667UL, 0x68696A6BUL, 0x6C6D6E6FUL,
+        0x70717273UL, 0x74757677UL, 0x78797A7BUL, 0x7C7D7E7FUL,
+        0x80818283UL, 0x84858687UL, 0x88898A8BUL, 0x8C8D8E8FUL,
+        0x90919293UL, 0x94959697UL, 0x98999A9BUL, 0x9C9D9E9FUL,
+        0xA0A1A2A3UL, 0xA4A5A6A7UL, 0xA8A9AAABUL, 0xACADAEAFUL,
+        0xB0B1B2B3UL, 0xB4B5B6B7UL, 0xB8B9BABBUL, 0xBCBDBEBFUL,
+        0xC0C1C2C3UL, 0xC4C5C6C7UL, 0xC8C9CACBUL, 0xCCCDCECFUL,
+        0xD0D1D2D3UL, 0xD4D5D6D7UL, 0xD8D9DADBUL, 0xDCDDDEDFUL,
+        0xE0E1E2E3UL, 0xE4E5E6E7UL, 0xE8E9EAEBUL, 0xECEDEEEFUL,
+        0xF0F1F2F3UL, 0xF4F5F6F7UL, 0xF8F9FAFBUL, 0xFCFDFEFFUL
     };
-    uint8_t i;
+    
     bool writeFailed = false;
+    enum FLASH_RETURN_STATUS status;
 
-    for(i = 0U; i < (WRITE_RANGE_SIZE_BYTES / 16U); i++)
+    status = FLASH_PageErase(range->startAddress, FLASH_UNLOCK_KEY);
+
+    if(status != FLASH_NO_ERROR)
     {
-        enum FLASH_RETURN_STATUS status =
-            FLASH_WordWrite(range->startAddress + ((uint32_t)i * 16UL),
-                            &data[i * 4U],
-                            FLASH_UNLOCK_KEY);
+        (void)printf("Erase failed before write at 0x%06lX\r\n\r\n",
+                     (unsigned long)range->startAddress);
+        writeFailed = true;
+    }
 
-        if(status != FLASH_NO_ERROR)
+    if(writeFailed == false)
+    {
+        uint8_t i;
+        for(i = 0U; i < (WRITE_RANGE_SIZE_BYTES / 16U); i++)
         {
-            (void)printf("Write failed at 0x%06lX\r\n\r\n",
-                         (unsigned long)(range->startAddress + ((uint32_t)i * 16UL)));
-            writeFailed = true;
-            break;
+            status = FLASH_WordWrite(range->startAddress + ((uint32_t)i * 16UL),
+                                     &data[i * 4U],
+                                     FLASH_UNLOCK_KEY);
+
+            if(status != FLASH_NO_ERROR)
+            {
+                (void)printf("Write failed at 0x%06lX\r\n\r\n",
+                             (unsigned long)(range->startAddress + ((uint32_t)i * 16UL)));
+                writeFailed = true;
+                break;
+            }
         }
     }
 
@@ -368,6 +371,16 @@ void WriteTestArea(void)
  */
 void EraseTestArea(void)
 {
+    static const struct TEST_AREA_RANGE eraseRanges[TEST_AREA_RANGE_COUNT] =
+    {
+        {1U, 0x810000UL, 0x810FFFUL, "Active"},
+        {2U, 0x811000UL, 0x811FFFUL, "Active"},
+        {3U, 0x812000UL, 0x812FFFUL, "Active"},
+        {4U, 0xC10000UL, 0xC10FFFUL, "Inactive"},
+        {5U, 0xC11000UL, 0xC11FFFUL, "Inactive"},
+        {6U, 0xC12000UL, 0xC12FFFUL, "Inactive"},
+    };
+
     const struct TEST_AREA_RANGE *selectedRange = NULL;
 
     TestAreaRangeTablePrint("Erase Test Area Options",
