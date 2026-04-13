@@ -66,7 +66,7 @@ _Figure 5. - Partition1 Set as Main Project_<br>
     
 Once the demo code is running on board there are a series of labs (lab0 - lab5) to walk through various dual boot use cases using this demo code including:
  * Dual boot project creation
- * Sequnece numbers 
+ * Sequence numbers 
  * Flash protection regions
  * BOOTSWP instructions 
  * Debugging 
