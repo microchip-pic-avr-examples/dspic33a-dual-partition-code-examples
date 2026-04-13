@@ -21,7 +21,7 @@ This lab is designed to explore the BOOTSWP instruction, which allows for the in
 The BOOTSWP instruction allows the active and inactive partitions to swap without updating the sequence number value and performing a reset. This is also known as a "soft swap". The BootSwap function for this demo can be reviewed in partition1.X/partition2.X &rarr; Source Files &rarr; boot_swap.S.
 
 To perform a BOOTSWP instruction:
-* Load the inactive panel sequence number into a W-reg.  
+* Load the inactive partition sequence number into a W-reg.  
 * Perform the BOOTSWP instruction on the inactive partition sequence number. 
 * Immediately after the BOOTSWP instruction, perform a single-word instruction that writes the program counter (e.g. GOTO W, CALL W, or BRA W). 
 * The target of the single-word instruction must be within 32KB of the current instruction. 
@@ -51,7 +51,11 @@ In this section, we'll explore how the BOOTSWP instruction works when both seque
 ### Part 2
 In this section, we'll explore how the BOOTSWP instruction works when the sequence number of the inactive partition is invalid. 
 
-1. Enter 'i' to erase the inactive partition sequence number. Note that the inactive partition sequence number is now all 0xF (invalid).<br> 
+1. Open the example0/partition1.X MPLAB X project.
+2. Compile and program the example. A menu should print on the screen. Note that partition 1 is currently active.<br>
+![Figure 1](./images/lab3_figure1.png)<br>
+![Figure 2](./images/lab3_figure2.png)<br>
+2. Enter capital 'S' to update the sequence number of the inactive partition. When prompted for a new sequence number, enter 'FFFFFF'. Note that the sequence number of the inactive partition (partition 2) is now showing as invalid.<br> 
 ![Figure 4](./images/lab3_figure4.png)
 2. Enter 'b' to perform a BOOTSWP. Note that the BOOTSWP fails because the partition 2 sequence number is invalid.<br> 
 ![Figure 5](./images/lab3_figure5.png)
@@ -81,8 +85,8 @@ In this section, we'll explore the FICD.NOBTSWP bit and how disabling it in part
 ![Figure 2](./images/lab3_figure2.png)
 12. Enter 'b' to perform a bootswap once more. Note that the bootswap is again successful and partition 2 is once again the active partition.<br> 
 ![Figure 8](./images/lab3_figure8.png)
-13. Enter 's' to write the sequence number of the inactive partition (partition 1). 
-14. Enter 'ff9006'. Note that this value is higher than the sequence number of partition 2 and should therefore result in partition 2 being mapped to the active partition on reset. See the sequence number lab or the README for additional details on the boot sequence number. 
+13. Enter capital 'S' to write the sequence number of the inactive partition (partition 1). 
+14. Enter 'FF9006'. Note that this value is higher than the sequence number of partition 2 and should therefore result in partition 2 being mapped to the active partition on reset. See the sequence number lab or the README for additional details on the boot sequence number. 
 15. Enter 'r' to reset. Note that on reset, partition 2 is the active partition.<br> 
 ![Figure 9](./images/lab3_figure9.png)
 16. Enter 'b' to perform a bootswap. This should fail because partition 2 was mapped to the active partition on reset. As a result, the UCA2 configuration bits were loaded, which contain the disabled FICD.NOBTSWP bit, preventing a bootswap.<br>
