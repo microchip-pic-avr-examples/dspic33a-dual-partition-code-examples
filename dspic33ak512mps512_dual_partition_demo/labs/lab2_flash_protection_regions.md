@@ -25,144 +25,111 @@ The current flash protection region configurations are diagrammed below for refe
 ## Lab Steps
 
 ### Overlapping Regions
-Each flash protection region defined in config_bits.c has a partition select bit called 'FPRnCTRL_PSEL', where 'n' is the region number. This bit controls which panel the region will apply to: PANEL1, PANEL2, or BOTH. 
+Each flash protection region defined in config_bits.c has a partition select bit called 'FPRnCTRL_PSEL', where 'n' is the region number. This bit controls which partition the region will apply to: PANEL1, PANEL2, or BOTH. 
 
 ![Figure 3](./images/lab2_figure3.png)
 
 When running in dual boot mode, it's possible to have overlapping flash protection regions with different FPRnCTRL_PSEL values. In the following examples, we'll explore how overlapping regions impact permissions.  
 
 #### Part 1
-The following steps will show how overlapping flash protection regions work when both regions apply to the same panel and have differing permissions. 
+The following steps will show how overlapping flash protection regions work when both regions apply to the same partition and have differing permissions. 
 
-We'll be working with PR0 and PR3, where:
+We'll be working with PR0 and PR1, where:
 
 **PR0**
 * Type: Firmware
 * Read: Enabled
 * Execute: Enabled
-* Write: Disabled
-* Panel: Both
-* Address range: 0x802000 - 0x802FFF
-
-**PR3**
-* Type: Firmware
-* Read: Enabled
-* Execute: Enabled
 * Write: Enabled
-* Panel: 2
-* Address range: 0x802000 - 0x802FFF
-
-1. Open the example0/partition1.X MPLAB X project.
-2. Compile and program the example. A menu should print on the screen.<br>
-![Figure 4](./images/lab2_figure4.png)<br>
-3. Enter 'e' to try and erase a page in a flash protection region. 
-4. Enter '3' to target PR3. 
-5. Despite PR3 having writes enabled, the erase fails because PR0 overlap with PR3 and is write/erase protected, applying to both panel 1 and panel 2. Next, we'll try and make PR0 writable so we can successfully erase a page from PR3.
-6. Enter 'u' to try and unlock a flash protection region. 
-7. Enter '0' to target PR0. This should unlock successfully. Although PR0 is unlocked, it's still write/erase protected. To enable write/erase permissions, we can erase a page in PR0. The erase functionality requires enabling of write/erase permissions in the target region.  
-8. Enter 'e' to try and erase a page in a flash protection region. 
-9. Enter '0' to target PR0. This should erase successfully. PR0 should now have write/erase enabled. 
-10. Enter 'e' to try and erase a page in a flash protection region. 
-11. Enter '3' to try once again to target PR3. This should now erase successfully, as there are no write protections enabled in the address range covered by PR3. 
-
-#### Part 2
-The following steps demonstrate how overlapping flash protection regions work when the regions apply to different panels and have differing permissions.  
-
-We'll be working with PR1 and PR4, where:
+* Partition: Both
+* Address range: 0x810000 - 0x811FFF
 
 **PR1**
 * Type: Firmware
 * Read: Enabled
 * Execute: Enabled
 * Write: Disabled
-* Panel: 1
-* Address range: 0x803000 - 0x803FFF
+* Partition: 2
+* Address range: 0x811000 - 0x811FFF
 
-**PR4**
+1. Open the example0/partition1.X MPLAB X project.
+2. Compile and program the example. A menu should print on the screen.<br>
+![Figure 4](./images/lab2_figure4.png)<br>
+3. Enter 'b' to swap the active/inactive partitions. Note that Partition 2 is now active.<br>
+![Figure 5](./images/lab2_figure5.png)
+3. Enter 'e' to try and erase a page in a flash protection region. A menu will display with address options.<br>
+![Figure 6](./images/lab2_figure6.png)
+4. Enter 'B' to target the region where PR0 and PR1 overlap. 
+5. Despite PR0 having writes enabled, the erase fails because PR0 overlaps with PR1, which is write/erase protected.<br>
+![Figure 7](./images/lab2_figure7.png)
+6. Reset the device by either pressing the reset button or the 'r' key in the terminal. Note that Partition 1 is once again the active partition. 
+7. Repeat steps 3 and 4. This time, the erase succeeds. Because Partition 1 is active, PR1 no longer restricts the selected address range. The operation is instead governed by PR0, which allows write/erase access.<br>
+![Figure 8](./images/lab2_figure8.png)
+
+#### Part 2
+The following steps demonstrate how overlapping flash protection regions work when the regions apply to different partitions and have differing permissions.  
+
+We'll be working with PR2 and PR3, where:
+
+**PR2**
 * Type: Firmware
 * Read: Enabled
 * Execute: Enabled
 * Write: Enabled
-* Panel: 2
-* Address range: 0x803000 - 0x803FFF
+* Partition: 1
+* Address range: 0x812000 - 0x812FFF
 
-1. Enter 'e' to try and erase a page in a flash protection region. 
-2. Enter '4' to target PR4. This should erase successfully. PR4 overlaps with PR1, but PR1 is associated with panel 1, so it has no impact on PR4, which applies to panel 2.
-
-### Panel Erase
-The panel erase function erases the inactive panel including the UCA1 and UCA2 pages (depending on which partition is currently mapped to the inactive space). In the following examples, we'll walk through the panel erase function and how flash protection regions can impact the ability to perform a panel erase.
-
-#### Part 1
-The following steps will show the panel erase functionality and how flash protection regions can prevent a panel erase. 
-
-We'll be working with PR0, PR5, PR6, and PR7, where:
-
-**PR0**
+**PR3**
 * Type: Firmware
 * Read: Enabled
 * Execute: Enabled
 * Write: Disabled
-* Panel: Both
-* Address range: 0x802000 - 0x802FFF
-
-**PR5**
-* Type: Firmware
-* Read: Enabled
-* Execute: Enabled
-* Write: Disabled
-* Panel: 2
-* Address range: 0x805000 - 0x805FFF
-
-**PR6**
-* Type: IRT
-* Read: Enabled
-* Execute: Enabled
-* Write: Disabled
-* Panel: 2
-* Address range: 0x806000 - 0x807FFF
-
-**PR7**
-* Type: Firmware
-* Read: Enabled
-* Execute: Enabled
-* Write: Disabled
-* Panel: Both
-* Address range: 0x80C000 - 0x80FFFF
+* Partition: 2
+* Address range: 0x812000 - 0x812FFF
 
 1. Open the example0/partition1.X MPLAB X project.
 2. Compile and program the example. A menu should print on the screen.<br>
 ![Figure 4](./images/lab2_figure4.png)<br> 
 Note in the terminal that partition 1 is active.<br> 
-![Figure 5](./images/lab2_figure5.png)<br>
-3. Enter 'p' to try and erase the inactive partition (partition 2). This should fail. PR5 and PR6 are write/erase protected and apply to panel 2, preventing the panel erase.
-4. Open partition1 &rarr; Source Files &rarr; config_bits.c. Update PR5 and PR6 to allow for write and erase operations.<br>
-![Figure 6](./images/lab2_figure6.png)<br>
-![Figure 7](./images/lab2_figure7.png)<br>
-5. Re-program the example. 
-6. Enter 'p' to try and erase the inactive partition (partition 2). This should fail again. PR0 and PR7 are also write protected and apply to both partition 1 and partition 2.
-7. Open partition1 &rarr; Source Files &rarr; config_bits.c. Enable writes for PR0 and PR7.<br>
-![Figure 8](./images/lab2_figure8.png)<br>
-![Figure 9](./images/lab2_figure9.png)<br>
-8. Re-program the example. 
-9. Enter 'p' to try and erase the inactive partition (partition 2). This should successfully erase the inactive partition. Note that the partition 2 sequence number is now all 0xF.<br>
-![Figure 10](./images/lab2_figure10.png)<br>
-Note that the write protections of partition 1 in PR1 and PR2 do not block panel 2 from being erased. Only flash protection regions assigned as the inactive partition or both will impact the erase.
+3. Enter 'e' to try and erase a page in a flash protection region. 
+4. Enter '3' to target PR2. The erase should succeed. Although PR3 overlaps the same address range and has writes disabled, PR3 applies only to Partition 2. Since Partition 1 is active, the operation is governed by PR2, which has write/erase enabled.
 
-#### Part 2
-The following steps will show that the UCB flash protection settings are not erased on a panel erase. 
+### Partition Erase
+The partition erase function erases the inactive partition including the UCA1 and UCA2 pages (depending on which partition is currently mapped to the inactive space). In the following examples, we'll walk through the partition erase function and how flash protection regions can impact the ability to perform a partition erase.
 
-We'll be working with PR6, where:
+#### Part 1
+The following steps will show the partition erase functionality and how flash protection regions can prevent a partition erase. 
 
-**PR6**
-* Type: IRT
+We'll be working with PR1 and PR3, where:
+
+**PR1**
+* Type: Firmware
 * Read: Enabled
 * Execute: Enabled
 * Write: Disabled
-* Panel: 2
-* Address range: 0x806000 - 0x807FFF
- 
-1. Enter 'u' to try and unlock a flash protection region. 
-2. Enter '6' to target PR6. This is an IRT region assigned to panel 2 and should fail to unlock. Unlike Firmware regions, IRT regions are locked and cannot be unlocked. Their permissions are set and cannot be updated in code. Note here that the panel erase does not erase the UCB flash protection settings. Only the inactive partition's code space and UCA1 or UCA2 (depending on which partition is currently inactive) are erased. 
+* Partition: 2
+* Address range: 0x811000 - 0x811FFF
 
+**PR3**
+* Type: Firmware
+* Read: Enabled
+* Execute: Enabled
+* Write: Disabled
+* Partition: 2
+* Address range: 0x812000 - 0x812FFF
+
+1. Open the example0/partition1.X MPLAB X project.
+2. Compile and program the example. A menu should print on the screen.<br>
+![Figure 4](./images/lab2_figure4.png)<br> 
+Note in the terminal that partition 1 is active.<br> 
+![Figure 9](./images/lab2_figure9.png)<br>
+3. Enter capital 'T' to try and bulk erase the inactive partition (partition 2). This should fail. PR1 and PR2 are write/erase protected and apply to partition 2, preventing the partition erase.
+4. Open partition1 &rarr; Source Files &rarr; config_bits.c. Update PR1 and PR3 to allow for write and erase operations.<br>
+![Figure 10](./images/lab2_figure10.png)<br>
+![Figure 11](./images/lab2_figure11.png)<br>
+5. Re-program the example. Note that writes are now enabled for PR1 and PR3.<br>
+![Figure 12](./images/lab2_figure12.png)
+9. Enter capital 'T' to try and erase the inactive partition (partition 2). This should successfully erase the inactive partition. Note that the partition 2 sequence number is now all 0xF.<br>
+![Figure 13](./images/lab2_figure13.png)<br>
 
 At the end of your exploration, reset the example0/partition1.X and example0/partition2.X projects so that they can be used for the next labs.

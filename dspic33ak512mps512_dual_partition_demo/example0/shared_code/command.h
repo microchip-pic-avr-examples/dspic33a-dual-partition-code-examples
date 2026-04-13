@@ -22,6 +22,6 @@
 #ifndef COMMAND_H
 #define COMMAND_H
 
-void COMMAND_Process(char command);
+void COMMAND_Process(void);
 
 #endif
