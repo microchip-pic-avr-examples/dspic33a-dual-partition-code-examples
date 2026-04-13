@@ -37,6 +37,7 @@
 
 #include "mcc_generated_files/flash/flash_types.h"
 #include "mcc_generated_files/flash/flash_nonblocking.h"
+#include "partition.h"
 #include "scan.h"
 #include "test_area_demo.h"
 
@@ -54,10 +55,11 @@
 #define TESTAREA_SEL_WIDTH                 3U
 #define TESTAREA_RANGE_WIDTH               21U
 #define TESTAREA_PARTITION_WIDTH           9U
+#define TESTAREA_FLASH_REGIONS_WIDTH       10U
 
 struct TEST_AREA_RANGE
 {
-    uint8_t selection;
+    char selection;
     uint32_t startAddress;
     uint32_t endAddress;
     const char *partitionLabel;
@@ -77,18 +79,20 @@ static bool TestAreaSelectionGet(const struct TEST_AREA_RANGE *ranges,
                                  const struct TEST_AREA_RANGE **selectedRange);
 static void WritePatternToRange(const struct TEST_AREA_RANGE *range);
 static void EraseRange(const struct TEST_AREA_RANGE *range);
+static uint8_t TestAreaPartitionNumberGet(const struct TEST_AREA_RANGE *range);
+static const char *TestAreaFlashRegionsLabelGet(const struct TEST_AREA_RANGE *range);
 
 /******************************************************************************/
 /* Private Data                                                               */
 /******************************************************************************/
 static const struct TEST_AREA_RANGE writeRanges[TEST_AREA_RANGE_COUNT] =
 {
-    {1U, 0x810000UL, 0x8100FFUL, "Active"},
-    {2U, 0x811000UL, 0x8110FFUL, "Active"},
-    {3U, 0x812000UL, 0x8120FFUL, "Active"},
-    {4U, 0xC10000UL, 0xC100FFUL, "Inactive"},
-    {5U, 0xC11000UL, 0xC110FFUL, "Inactive"},
-    {6U, 0xC12000UL, 0xC120FFUL, "Inactive"},
+    {'A', 0x810000UL, 0x8100FFUL, "Active"},
+    {'B', 0x811000UL, 0x8110FFUL, "Active"},
+    {'C', 0x812000UL, 0x8120FFUL, "Active"},
+    {'D', 0xC10000UL, 0xC100FFUL, "Inactive"},
+    {'E', 0xC11000UL, 0xC110FFUL, "Inactive"},
+    {'F', 0xC12000UL, 0xC120FFUL, "Inactive"},
 };
 
 /**
@@ -166,6 +170,8 @@ static void TestAreaTableSeparatorPrint(void)
     PrintRepeatedChar('-', TESTAREA_RANGE_WIDTH);
     (void)printf(" | ");
     PrintRepeatedChar('-', TESTAREA_PARTITION_WIDTH);
+    (void)printf(" | ");
+    PrintRepeatedChar('-', TESTAREA_FLASH_REGIONS_WIDTH);
     (void)printf("\r\n");
 }
 
@@ -185,11 +191,12 @@ static void TestAreaRangeTablePrint(const char *title,
     uint8_t i;
 
     (void)printf("  %s\r\n", title);
-    (void)printf("  ---------------------------------------\r\n");
-    (void)printf("  %-*s | %-*s | %-*s\r\n",
-                 TESTAREA_SEL_WIDTH, "SEL",
-                 TESTAREA_RANGE_WIDTH, "ADDRESS RANGE",
-                 TESTAREA_PARTITION_WIDTH, "PARTITION");
+    (void)printf("  ----------------------------------------------------\r\n");
+    (void)printf("  %-*s | %-*s | %-*s | %-*s\r\n",
+             TESTAREA_SEL_WIDTH, "SEL",
+             TESTAREA_RANGE_WIDTH, "ADDRESS RANGE",
+             TESTAREA_PARTITION_WIDTH, "PARTITION",
+             TESTAREA_FLASH_REGIONS_WIDTH, "REGION(S)");
 
     TestAreaTableSeparatorPrint();
 
@@ -203,10 +210,11 @@ static void TestAreaRangeTablePrint(const char *title,
                     (unsigned long)ranges[i].startAddress,
                     (unsigned long)ranges[i].endAddress);
 
-        (void)printf("  %-*u | %-*s | %-*s\r\n",
-                    TESTAREA_SEL_WIDTH, (unsigned int)ranges[i].selection,
-                    TESTAREA_RANGE_WIDTH, addressRangeString,
-                    TESTAREA_PARTITION_WIDTH, ranges[i].partitionLabel);
+        (void)printf("  %-*c | %-*s | %-*s | %-*s\r\n",
+             TESTAREA_SEL_WIDTH, ranges[i].selection,
+             TESTAREA_RANGE_WIDTH, addressRangeString,
+             TESTAREA_PARTITION_WIDTH, ranges[i].partitionLabel,
+             TESTAREA_FLASH_REGIONS_WIDTH, TestAreaFlashRegionsLabelGet(&ranges[i]));
     }
 
     (void)printf("\r\n");
@@ -227,15 +235,22 @@ static bool TestAreaSelectionGet(const struct TEST_AREA_RANGE *ranges,
 {
     bool isValid = false;
     uint8_t i;
-    uint8_t selection = 0U;
     char inputChar;
+    char selection;
 
-    (void)printf("Select range (1-6): ");
+    (void)printf("Select range (A-F): ");
 
     inputChar = SCAN_Char(true);
     (void)printf("\r\n\r\n");
 
-    selection = (uint8_t)((uint8_t)inputChar - (uint8_t)'0');
+    if((inputChar >= 'a') && (inputChar <= 'f'))
+    {
+        selection = (char)(inputChar - ('a' - 'A'));
+    }
+    else
+    {
+        selection = inputChar;
+    }
 
     for(i = 0U; i < count; i++)
     {
@@ -346,6 +361,68 @@ static void EraseRange(const struct TEST_AREA_RANGE *range)
 
 /**
  * @ingroup  command.c
+ * @brief    Returns the partition number currently represented by the range.
+ *
+ * @param    range - selected range
+ * @return   uint8_t - partition number (1 or 2)
+ */
+static uint8_t TestAreaPartitionNumberGet(const struct TEST_AREA_RANGE *range)
+{
+    uint8_t partitionNumber = PARTITION_ActiveGet();
+
+    if(strcmp(range->partitionLabel, "Inactive") == 0)
+    {
+        partitionNumber = PARTITION_InactiveGet();
+    }
+
+    return partitionNumber;
+}
+
+/**
+ * @ingroup  command.c
+ * @brief    Returns the flash protection region(s) that currently govern the
+ *           selected test area.
+ *
+ * @param    range - selected range
+ * @return   const char* - region label string
+ */
+static const char *TestAreaFlashRegionsLabelGet(const struct TEST_AREA_RANGE *range)
+{
+    const char *flashRegionsLabel = "PR0";
+    uint8_t partitionNumber = TestAreaPartitionNumberGet(range);
+
+    if((range->startAddress == 0x811000UL) || (range->startAddress == 0xC11000UL))
+    {
+        if(partitionNumber == 2U)
+        {
+            flashRegionsLabel = "PR0, PR1";
+        }
+        else
+        {
+            flashRegionsLabel = "PR0";
+        }
+    }
+    else if((range->startAddress == 0x812000UL) || (range->startAddress == 0xC12000UL))
+    {
+        if(partitionNumber == 1U)
+        {
+            flashRegionsLabel = "PR2";
+        }
+        else
+        {
+            flashRegionsLabel = "PR3";
+        }
+    }
+    else
+    {
+        flashRegionsLabel = "PR0";
+    }
+
+    return flashRegionsLabel;
+}
+
+/**
+ * @ingroup  command.c
  * @brief    Displays the write-range table, prompts for selection,
  *           and writes the selected test area.
  *
@@ -380,12 +457,12 @@ void EraseTestArea(void)
 {
     static const struct TEST_AREA_RANGE eraseRanges[TEST_AREA_RANGE_COUNT] =
     {
-        {1U, 0x810000UL, 0x810FFFUL, "Active"},
-        {2U, 0x811000UL, 0x811FFFUL, "Active"},
-        {3U, 0x812000UL, 0x812FFFUL, "Active"},
-        {4U, 0xC10000UL, 0xC10FFFUL, "Inactive"},
-        {5U, 0xC11000UL, 0xC11FFFUL, "Inactive"},
-        {6U, 0xC12000UL, 0xC12FFFUL, "Inactive"},
+        {'A', 0x810000UL, 0x810FFFUL, "Active"},
+        {'B', 0x811000UL, 0x811FFFUL, "Active"},
+        {'C', 0x812000UL, 0x812FFFUL, "Active"},
+        {'D', 0xC10000UL, 0xC10FFFUL, "Inactive"},
+        {'E', 0xC11000UL, 0xC11FFFUL, "Inactive"},
+        {'F', 0xC12000UL, 0xC12FFFUL, "Inactive"},
     };
 
     const struct TEST_AREA_RANGE *selectedRange = NULL;
