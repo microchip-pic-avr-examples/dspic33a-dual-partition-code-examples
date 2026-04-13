@@ -64,6 +64,70 @@ _Figure 5. - Partition1 Set as Main Project_<br>
     ![Dual Partition Demo Menu](./images/dualPartitionDemoMenu.jpg)<br>
     _Figure 7. - Dual Partition Demo Menu_<br>
     
+Once the demo code is running on board there are a series of labs (lab0 - lab5) to walk through various dual boot use cases using this demo code including:
+ * Dual boot project creation
+ * Sequnece numbers 
+ * Flash protection regions
+ * BOOTSWP instructions 
+ * Debugging 
+ * Congifuration bits
+
+All commands implemented in this demo that are used for these labs are documented below in the [Demo Usage](#demo-usage) section.
+
+## Demo Usage
+
+Upon programming partition1.X, the terminal window will display a list of reset sources, the Active and Inactive Partitions along with their associated sequence numbers, the flash regions and their associated settings, a menu with various partition operations, and a command input. 
+
+![Dual Partition Demo Menu](./images/dualPartitionDemoMenu.jpg)<br>
+_Figure 11. - Dual Partition Demo Menu_<br>
+
+### Flash Test Area Options
+
+Three commands are listed under the "Flash Test Area Options" header: 'p', 'e', 'w', and 'T'. 
+
+![Flash Test Area Options](./images/flashTestAreaOptions.jpg)<br>
+_Figure 12. - Flash Test Area Options_<br>
+
+The `p` command prints the current contents of a selected flash test area. It presents a menu with 6 selections covering the test areas in both the active and inactive partitions.
+
+The `e` command erases a 4KB test area. It also presents a menu with 6 selections covering the flash test areas in both the active and inactive partitions. After the erase completes, the region is printed so the updated contents can be reviewed.
+
+The `w` command writes 256 bytes to a selected test area and then prints the region after the write completes.
+
+The `T` command performs a bulk erase of the inactive partition.
+
+Note that erase, write, and bulk erase operations may fail depending on the write permissions configured for the selected region. A success or failure message is displayed after each operation completes.
+
+See [Flash Protection Regions](#flash-protection-regions) for details on the flash protection region configurations. 
+
+### Sequence Number Options
+
+Two commands are listed under the "Sequence Number Options" header: 's', and 'S'. 
+
+![Sequence Number Options](./images/sequenceNumberOptions.jpg)<br>
+_Figure 13. - Sequence Number Options_<br>
+
+The `S` command writes a new sequence number to the inactive partition while the lower case `s` command writes a new sequence number to the inactive partition. 
+
+When either command is entered, the demo prompts for a 24-bit sequence number in the format `IBTSEQn + BTSEQn`. See [Boot Sequence Number](#boot-sequence-number) for details. After the value is entered, the menu is reprinted with the updated sequence number.
+
+**Note:** If an invalid value is entered, the sequence number menu will display `INVALID`; however, the value will still be written.
+
+**Note:** If both the active and inactive partitions contain invalid sequence numbers, Partition 1 becomes the active partition after reset.
+
+### System Options
+
+Three commands are listed under the "System Options" header: 'b', 'q', and 'r'. 
+
+![System Options](./images/systemOptions.jpg)<br>
+_Figure 14. - System Options_<br>
+
+The 'b' command will perform a BOOTSWP. A successful bootswap can be seen by observing if the Active Partition and Inactive Partition switched at the top of the demo menu. See [BOOTSWP Instruction](#bootswp-instruction) for details. 
+
+The 'q' command will run the breakpoint example, if in debug mode. If a breakpoint is set, this will hit the next breakpoint. The breakpoint function is simply a small function located at the same address for both partitions that does nothing and returns. The content of the function varies slightly between partition1 and partition2 so it's more obvious from which partition the function was run.
+
+The 'r' command will issue a reset. This will swap the active and Inactive Partitions if the Inactive Partition has a lower sequence number than the Active Partition or if the Active Partition contains an invalid sequence number. 
+
 ## dsPIC33A Dual Partition Overview
 
 Dual Partition mode allows for two independent applications to be programmed into the device, referred to as Partition 1 and Partition 2. On device startup, one of the partitions is mapped to the Active Partition and executed while the other is mapped to the Inactive Partition. Either Partition 1 or Partition 2 can be considered the Active Partition. The assignment of a partition to the Active or Inactive Partition is determined automatically by a code signature, known as the [Boot Sequence Number](#boot-sequence-number) (BTSEQn). 
@@ -192,57 +256,3 @@ The entire Inactive Partition code can be updated by performing the following:
 1. Complete an [inactive partition erase](#inactive-partition-erase). 
 2. Use page write to write each page of the Inactive Partition. 
 3. Verify the data has been properly written (ex. perform/verify the CRC of the partition).
-
-## Demo Usage
-
-Upon programming partition1.X, the terminal window will display a list of reset sources, the Active and Inactive Partitions along with their associated sequence numbers, the flash regions and their associated settings, a menu with various partition operations, and a command input. 
-
-![Dual Partition Demo Menu](./images/dualPartitionDemoMenu.jpg)<br>
-_Figure 11. - Dual Partition Demo Menu_<br>
-
-### Flash Test Area Options
-
-Three commands are listed under the "Flash Test Area Options" header: 'p', 'e', 'w', and 'T'. 
-
-![Flash Test Area Options](./images/flashTestAreaOptions.jpg)<br>
-_Figure 12. - Flash Test Area Options_<br>
-
-The `p` command prints the current contents of a selected flash test area. It presents a menu with 6 selections covering the test areas in both the active and inactive partitions.
-
-The `e` command erases a 4KB test area. It also presents a menu with 6 selections covering the flash test areas in both the active and inactive partitions. After the erase completes, the region is printed so the updated contents can be reviewed.
-
-The `w` command writes 256 bytes to a selected test area and then prints the region after the write completes.
-
-The `T` command performs a bulk erase of the inactive partition.
-
-Note that erase, write, and bulk erase operations may fail depending on the write permissions configured for the selected region. A success or failure message is displayed after each operation completes.
-
-See [Flash Protection Regions](#flash-protection-regions) for details on the flash protection region configurations. 
-
-### Sequence Number Options
-
-Two commands are listed under the "Sequence Number Options" header: 's', and 'S'. 
-
-![Sequence Number Options](./images/sequenceNumberOptions.jpg)<br>
-_Figure 13. - Sequence Number Options_<br>
-
-The `S` command writes a new sequence number to the inactive partition while the lower case `s` command writes a new sequence number to the inactive partition. 
-
-When either command is entered, the demo prompts for a 24-bit sequence number in the format `IBTSEQn + BTSEQn`. See [Boot Sequence Number](#boot-sequence-number) for details. After the value is entered, the menu is reprinted with the updated sequence number.
-
-**Note:** If an invalid value is entered, the sequence number menu will display `INVALID`; however, the value will still be written.
-
-**Note:** If both the active and inactive partitions contain invalid sequence numbers, Partition 1 becomes the active partition after reset.
-
-### System Options
-
-Three commands are listed under the "System Options" header: 'b', 'q', and 'r'. 
-
-![System Options](./images/systemOptions.jpg)<br>
-_Figure 14. - System Options_<br>
-
-The 'b' command will perform a BOOTSWP. A successful bootswap can be seen by observing if the Active Partition and Inactive Partition switched at the top of the demo menu. See [BOOTSWP Instruction](#bootswp-instruction) for details. 
-
-The 'q' command will run the breakpoint example, if in debug mode. If a breakpoint is set, this will hit the next breakpoint. The breakpoint function is simply a small function located at the same address for both partitions that does nothing and returns. The content of the function varies slightly between partition1 and partition2 so it's more obvious from which partition the function was run.
-
-The 'r' command will issue a reset. This will swap the active and Inactive Partitions if the Inactive Partition has a lower sequence number than the Active Partition or if the Active Partition contains an invalid sequence number. 
