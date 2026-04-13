@@ -52,8 +52,8 @@
 #define TEST_AREA_RANGE_COUNT              6U
 
 #define TESTAREA_SEL_WIDTH                 3U
-#define TESTAREA_RANGE_WIDTH               19U
-#define TESTAREA_PARTITION_WIDTH           8U
+#define TESTAREA_RANGE_WIDTH               21U
+#define TESTAREA_PARTITION_WIDTH           9U
 
 struct TEST_AREA_RANGE
 {
@@ -185,7 +185,7 @@ static void TestAreaRangeTablePrint(const char *title,
     uint8_t i;
 
     (void)printf("  %s\r\n", title);
-    (void)printf("  ----------------------------------------------------\r\n");
+    (void)printf("  ---------------------------------------\r\n");
     (void)printf("  %-*s | %-*s | %-*s\r\n",
                  TESTAREA_SEL_WIDTH, "SEL",
                  TESTAREA_RANGE_WIDTH, "ADDRESS RANGE",
@@ -195,11 +195,18 @@ static void TestAreaRangeTablePrint(const char *title,
 
     for(i = 0U; i < count; i++)
     {
-        (void)printf("  %-*u | 0x%06lX-0x%06lX | %-*s\r\n",
-                     TESTAREA_SEL_WIDTH, (unsigned int)ranges[i].selection,
-                     (unsigned long)ranges[i].startAddress,
-                     (unsigned long)ranges[i].endAddress,
-                     TESTAREA_PARTITION_WIDTH, ranges[i].partitionLabel);
+        char addressRangeString[24];
+
+        (void)snprintf(addressRangeString,
+                    sizeof(addressRangeString),
+                    "0x%06lX-0x%06lX",
+                    (unsigned long)ranges[i].startAddress,
+                    (unsigned long)ranges[i].endAddress);
+
+        (void)printf("  %-*u | %-*s | %-*s\r\n",
+                    TESTAREA_SEL_WIDTH, (unsigned int)ranges[i].selection,
+                    TESTAREA_RANGE_WIDTH, addressRangeString,
+                    TESTAREA_PARTITION_WIDTH, ranges[i].partitionLabel);
     }
 
     (void)printf("\r\n");
