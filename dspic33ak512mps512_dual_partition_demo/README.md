@@ -70,7 +70,7 @@ Once the demo code is running on board there are a series of labs (lab0 - lab5) 
  * Flash protection regions
  * BOOTSWP instructions 
  * Debugging 
- * Congifuration bits
+ * Configuration bits
 
 All commands implemented in this demo that are used for these labs are documented below in the [Demo Usage](#demo-usage) section.
 
