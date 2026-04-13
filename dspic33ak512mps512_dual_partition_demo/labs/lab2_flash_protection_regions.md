@@ -59,7 +59,7 @@ We'll be working with PR0 and PR1, where:
 ![Figure 5](./images/lab2_figure5.png)
 3. Enter 'e' to try and erase a page in a flash protection region. A menu will display with address options.<br>
 ![Figure 6](./images/lab2_figure6.png)
-4. Enter '2' to target the region where PR0 and PR1 overlap. 
+4. Enter 'B' to target the region where PR0 and PR1 overlap. 
 5. Despite PR0 having writes enabled, the erase fails because PR0 overlaps with PR1, which is write/erase protected.<br>
 ![Figure 7](./images/lab2_figure7.png)
 6. Reset the device by either pressing the reset button or the 'r' key in the terminal. Note that Partition 1 is once again the active partition. 
