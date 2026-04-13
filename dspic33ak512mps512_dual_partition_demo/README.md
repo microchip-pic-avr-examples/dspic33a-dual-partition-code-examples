@@ -4,11 +4,11 @@
     <img alt="Microchip Logo." src="images/microchip_logo_black_red.png">
 </picture>
 
-# dsPIC33A Dual Panel Demo
+# dsPIC33A Dual Partition Demo
 
 ---
 
-**NOTE: THIS DEMO IS AN ENGINEERING RELEASE TO DEMONSTRATE dsPIC33A DUAL PANEL FUNCTIONALITY AND SHOULD BE USED FOR REFERENCE ONLY. THIS CODE IS NOT INTENDED FOR USE IN PRODUCTION.**
+**NOTE: THIS DEMO IS AN ENGINEERING RELEASE TO DEMONSTRATE dsPIC33A DUAL PARTITION FUNCTIONALITY AND SHOULD BE USED FOR REFERENCE ONLY. THIS CODE IS NOT INTENDED FOR USE IN PRODUCTION.**
 
 ---
 
@@ -22,7 +22,7 @@ _Figure 2. - dsPIC33AK512MPS512 Curiosity GP DIM_<br><br>
 The associated partition1 and partition2 projects demonstrate the following:
 * Programming the dsPIC33AK512MPS512 in Dual Partition Mode
 * Switching between partition 1 and partition 2
-* Performing a panel erase 
+* Performing a partition erase 
 * Configuring flash protection regions in Dual Partition mode
 
 ## Related Documentation 
@@ -61,8 +61,8 @@ _Figure 5. - Partition1 Set as Main Project_<br>
     ![Make and Program Device](./images/makeAndProgram.jpg)<br>
     _Figure 6. - "Make and Program" button in MPLAB X_<br>
 8. The board should now be programmed, as indicated by LED0 blinking, and the terminal window opened in Step 3 should now display the dual partition demo menu.<br>
-    ![Dual Panel Demo Menu](./images/dualPanelDemoMenu.jpg)<br>
-    _Figure 7. - Dual Panel Demo Menu_<br>
+    ![Dual Partition Demo Menu](./images/dualPartitionDemoMenu.jpg)<br>
+    _Figure 7. - Dual Partition Demo Menu_<br>
     
 ## dsPIC33A Dual Partition Overview
 
@@ -70,8 +70,8 @@ Dual Partition mode allows for two independent applications to be programmed int
 
 The Active Partition is located at memory address 0x800000-0x81FFFE and the Inactive Partition is located at memory address 0xC00000-0xC1FFFE. The addresses of 0xC00000-0xC1FFFE can be thought of as "virtual addresses". These addresses do not exist in actual flash memory but rather are values used to reference and access the Inactive Partition memory space. 
 
-![dsPIC33A Dual Panel Memory Map](./images/memoryMap.jpg)<br>
-_Figure 8. - Dual Panel Memory Map_<br>
+![dsPIC33A Dual Partition Memory Map](./images/memoryMap.jpg)<br>
+_Figure 8. - Dual Partition Memory Map_<br>
 
 ### Dual Partition Memory Mode
 
@@ -113,7 +113,7 @@ The BOOTSWP instruction allows the Active and Inactive Partitions to be swapped 
 5. Check the SFTSWP bit to verify the BOOTSWP executed correctly. 
 6. If the swap passes, reset/jump to the entry point of the new Active Partition.
 
-If the [BTSEQ validation](#boot-sequence-number) fails, the BOOTSWP will fail. In the case of a failed BOOTSWP, the instruction following the BOOTSWP will be executed from the currently active panel. 
+If the [BTSEQ validation](#boot-sequence-number) fails, the BOOTSWP will fail. In the case of a failed BOOTSWP, the instruction following the BOOTSWP will be executed from the currently active partition. 
 
 **NOTE**: It is critical that the BOOTSWP and subsequent GOTO instruction exist at the exact same address in both partitions. 
 
@@ -127,7 +127,7 @@ UCB is shared by partitions 1 and 2 while UCA and UCAI are either UCA1 (User Con
 
 #### Flash Protection Regions 
 
-In this example, 4 Flash Protection Regions (PR0-PR3) have been defined and enabled in order to demonstrate the various protection scenarios when in dual panel mode. These regions are defined in Partition 1's config_bits.c file. As noted above, flash protection region configurations are mapped to UCB, therefore these configurations are valid for both Partition 1 and Partition 2. The regions are configured as follows: 
+In this example, 4 Flash Protection Regions (PR0-PR3) have been defined and enabled in order to demonstrate the various protection scenarios when in dual partition mode. These regions are defined in Partition 1's config_bits.c file. As noted above, flash protection region configurations are mapped to UCB, therefore these configurations are valid for both Partition 1 and Partition 2. The regions are configured as follows: 
 
 **PR0** 
 * FPR0CTRL:
@@ -142,7 +142,7 @@ In this example, 4 Flash Protection Regions (PR0-PR3) have been defined and enab
 
 **PR1**
 * FPR1CTRL:
-    * Partition Select: Panel 2
+    * Partition Select: Partition 2
     * Type: Firmware 
     * Read: Enabled 
     * Execute: Enabled
@@ -152,8 +152,8 @@ In this example, 4 Flash Protection Regions (PR0-PR3) have been defined and enab
 
 **PR2**
 * FPR2CTRL:
-    * Partition Select: Panel 1
-    * Type: Firmwaer
+    * Partition Select: Partition 1
+    * Type: Firmware
     * Read: Enabled 
     * Execute: Enabled
     * Write: Enabled
@@ -162,7 +162,7 @@ In this example, 4 Flash Protection Regions (PR0-PR3) have been defined and enab
 
 **PR3**
 * FPR3CTRL:
-    * Partition Select: Panel 2
+    * Partition Select: Partition 2
     * Type: Firmware 
     * Read: Enabled 
     * Execute: Enabled
@@ -177,84 +177,69 @@ _Figure 10. - Flash Protection Region Configuration_<br>
 
 **NOTE**: The PRnST and PRnEND registers are offset from 0x800000 and are page aligned (the lower bits are hardware restricted to force page alignment).
 
-### Inactive Panel Erase 
+### Inactive Partition Erase 
 
-The Inactive Partition (including UCA1/2 pages depending on which partition is currently mapped to the inactive space) can be erased using the inactive panel erase sequence. This can be performed by: 
+The Inactive Partition (including UCA1/2 pages depending on which partition is currently mapped to the inactive space) can be erased using the inactive partition erase sequence. This can be performed by: 
 
 1. Setting NVMADR to the Inactive Partition base address
-2. Setting NVMCON to the panel erase opcode (0x4004)
+2. Setting NVMCON to the partition erase opcode (0x4004)
 3. Configuring NVMCON to word program 
 
-### Inactive Panel Program
+### Inactive Partition Program
 
 The entire Inactive Partition code can be updated by performing the following: 
 
-1. Complete an [inactive panel erase](#inactive-panel-erase). 
+1. Complete an [inactive partition erase](#inactive-partition-erase). 
 2. Use page write to write each page of the Inactive Partition. 
 3. Verify the data has been properly written (ex. perform/verify the CRC of the partition).
 
 ## Demo Usage
 
-Upon programming partition1.X, the terminal window will display a list of reset sources, the Active and Inactive Partitions along with their associated sequence numbers, a menu with various partition operations, and a command input. 
+Upon programming partition1.X, the terminal window will display a list of reset sources, the Active and Inactive Partitions along with their associated sequence numbers, the flash regions and their associated settings, a menu with various partition operations, and a command input. 
 
-![Dual Panel Demo Menu](./images/dualPanelDemoMenu.jpg)<br>
-_Figure 11. - Dual Panel Demo Menu_<br>
+![Dual Partition Demo Menu](./images/dualPartitionDemoMenu.jpg)<br>
+_Figure 11. - Dual Partition Demo Menu_<br>
 
-### Sequence Number Options
+### Flash Test Area Options
 
-Three commands are listed under the "Sequence Number Options" header: 's', 'a', and 'i'. 
+Three commands are listed under the "Flash Test Area Options" header: 'p', 'e', 'w', and 'T'. 
 
-![Sequence Number Options](./images/sequenceNumberOptions.jpg)<br>
-_Figure 12. - Sequence Number Options_<br>
+![Flash Test Area Options](./images/flashTestAreaOptions.jpg)<br>
+_Figure 12. - Flash Test Area Options_<br>
 
-The 's' command writes a new sequence number to the Inactive Partition. The current active and Inactive Partition, their numbers (1 or 2), and their sequence numbers are printed at the top of the demo for reference. When 's' is entered, the demo prompts for a 24-bit sequence number in the format IBTSEQn + BTSEQn. See [Boot Sequence Number](#boot-sequence-number) for details. Once entered, the menu will reprint with the updated sequence number displayed for the Inactive Partition. 
+The `p` command prints the current contents of a selected flash test area. It presents a menu with 6 selections covering the test areas in both the active and inactive partitions.
 
-**NOTE**: If an invalid number is entered, an INVALID message will display, however the invalid value will still be written. 
+The `e` command erases a 4KB test area. It also presents a menu with 6 selections covering the flash test areas in both the active and inactive partitions. After the erase completes, the region is printed so the updated contents can be reviewed.
 
-The 'a' command erases the partition sequence number of the Active Partition and fills BTSEQ [127:0] with 0xF (invalid value). After the command is entered, the menu reprints and the updated sequence number is displayed. On reset, the Active Partition will become inactive if the Inactive Partition has a valid sequence number. The sequence number of the Inactive Partition can be rewritten using the 's' command. 
+The `w` command writes 256 bytes to a selected test area and then prints the region after the write completes.
 
-The 'i' command erases the partition sequence number of the Inactive Partition and fills BTSEQ [127:0] with 0xF (invalid value). 
+The `T` command performs a bulk erase of the inactive partition.
 
-**NOTE**: If both the Active and Inactive Partitions contain invalid sequence numbers, Partition 1 will become the Active Partition on reset. 
-
-### Flash Panel Lock & Unlock Options
-
-Three commands are listed under the "Flash Panel Lock & Unlock Options" header: 'u', 'l', and 'x'. 
-
-![Flash Panel Lock & Unlock Options](./images/flashPanelLockUnlockOptions.jpg)<br>
-_Figure 13. - Flash Panel Lock & Unlock Options_<br>
-
-The 'u' command unlocks a flash protection region, while 'l' locks a region (can be unlocked), and 'x' locks a region until reset. When one of the three commands have been entered, the terminal will prompt for a flash region (0-7). A message will display indicating if the operation was successful or not. 
+Note that erase, write, and bulk erase operations may fail depending on the write permissions configured for the selected region. A success or failure message is displayed after each operation completes.
 
 See [Flash Protection Regions](#flash-protection-regions) for details on the flash protection region configurations. 
 
-Note that the permissions and lock status of IRT regions cannot be changed, therefore unlock/lock/lock until reset attempts for IRT regions will fail. 
+### Sequence Number Options
 
-### Copy & Erase Options
+Two commands are listed under the "Sequence Number Options" header: 's', and 'S'. 
 
-Three commands are listed under the "Copy and Erase Options" header: 'c', 'e', and 'p'. 
+![Sequence Number Options](./images/sequenceNumberOptions.jpg)<br>
+_Figure 13. - Sequence Number Options_<br>
 
-![Copy & Erase Options](./images/copyEraseOptions.jpg)<br>
-_Figure 14. - Copy & Erase Options_<br>
+The `S` command writes a new sequence number to the inactive partition while the lower case `s` command writes a new sequence number to the inactive partition. 
 
-The 'c' command will erase the Inactive Partition and copy the code from the Active Partition to the Inactive Partition. This may be useful if, during testing, parts of the Inactive Partition were erased. Note that this will not be successful if the Inactive Partition or both partitions have active write/erase protections enabled.
+When either command is entered, the demo prompts for a 24-bit sequence number in the format `IBTSEQn + BTSEQn`. See [Boot Sequence Number](#boot-sequence-number) for details. After the value is entered, the menu is reprinted with the updated sequence number.
 
-The 'e' command erases a page from a test area in a flash protection region. When entered, the terminal will prompt for an address range option (1-6). If a page from that region can be erased, a success message will be displayed. This will fail if:
+**Note:** If an invalid value is entered, the sequence number menu will display `INVALID`; however, the value will still be written.
 
-1. A region is set as IRT and has write protections enabled. 
-2. A region is writable; however it overlaps with another region that is write protected. For example, an attempt to erase a page from 0x811000-0x811FFF of PR0 will fail despite PR0 being writable, since PR1 covers the same memory addresses and is write protected. 
+**Note:** If both the active and inactive partitions contain invalid sequence numbers, Partition 1 becomes the active partition after reset.
 
-![Flash Region Overlap](./images/eraseProtectionOverlap.jpg)<br>
-_Figure 15. - Flash Region Overlap_<br>
+### System Options
 
-The 'p' command erases the Inactive Partition, including the sequence number. See [](#inactive-panel-erase) for details. If there are any write protections enabled, this will fail. 
+Three commands are listed under the "System Options" header: 'b', 'q', and 'r'. 
 
-### Bootswap, Debug, & Reset Options
-
-Three commands are listed under the "Bootswap, Debug, & Reset Options" header: 'b', 'q', and 'r'. 
-
-![Bootswap, Debug, & Reset Options](./images/bootswapDebugResetOptions.jpg)<br>
-_Figure 16. - Bootswap, Debug, & Reset Options_<br>
+![System Options](./images/systemOptions.jpg)<br>
+_Figure 14. - System Options_<br>
 
 The 'b' command will perform a BOOTSWP. A successful bootswap can be seen by observing if the Active Partition and Inactive Partition switched at the top of the demo menu. See [BOOTSWP Instruction](#bootswp-instruction) for details. 
 
