@@ -1,7 +1,7 @@
 # Lab 2 - Flash Protection Regions
 This lab is designed to explore flash protection regions and their behavior in dual partition mode.
 
-The current flash protection region configurations are diagrammed below for reference throughout the lab. These settings can also be viewed in partition1 &rarr; Source Files &rarr; config_bits.c.
+The current flash protection region configurations are diagrammed below for reference throughout the lab. These settings can also be viewed in partition1 &rarr; Source Files &rarr; config_bits.c.<br>
 ![Figure 1](./images/lab2_figure1.png)<br>
 
 ## Required Software
