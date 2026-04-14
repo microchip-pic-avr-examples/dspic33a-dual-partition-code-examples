@@ -43,10 +43,10 @@ The objective of this section is to highlight the FICD_NOBTSWP configuration bit
 2. Compile and program the example.
 3. In the terminal program, press the letter 'b' to issue a BOOTSWP request.  Note that the active partition is changed to partition 2.<br>![Figure 1](images/lab5_figure1.png)
   
-4. Open the config_bits.c file.  
+4. Open the config_bits.c file in partition1.X.  
 5. Change the FICD_NOBTSWP value to "OFF".  This will disable the BOOTSWP instruction when UCA1 is loaded on reset.
 6. Compile and program the example.
-7. In the terminal program, press the letter 'b' to issue a BOOTSWP request.  Note that the boot swap request failed.<br>![Figure 2](images/lab5_figure2.png)
+7. In the terminal program, press the letter 'b' to issue a BOOTSWP request.  Note that the boot swap request failed and partition 1 remains the active partition.<br>![Figure 2](images/lab5_figure2.png)
 
 This section shows how the BOOTSWP instruction can be enabled/disabled via the FICD_NOBTSWP in the UCAx configuration section.
 
@@ -58,7 +58,7 @@ The objective of this section is to show how UCA1 and UCA2 are loaded on reset a
 3. Change the FICD_NOBTSWP value to "OFF".  This will disable the BOOTSWP instruction when UCA1 is loaded on reset.<br>![Figure 3](images/lab5_figure3.png)
 4. Compile and program the example.
 5. In the terminal program, press the letter 'b' to issue a BOOTSWP request.  Note that the boot swap request failed.  Boot swaps are disabled.<br>![Figure 4](images/lab5_figure4.png)
-6. Type 's' in the terminal and enter 'FFE001' as the sequence number.  This will make partition 2 the lower sequence number.<br>![Figure 5](images/lab5_figure5.png)
+6. Type capital 'S' in the terminal to update the sequence number of the inactive partition and enter 'FFE001'.  This will make partition 2 the lower sequence number.<br>![Figure 5](images/lab5_figure5.png)
 7. Type 'r' in the terminal to issue a reset.  Note that partition 2 is the active partition.<br>![Figure 6](images/lab5_figure6.png)
 8. Type 'b' in the terminal to issue a BOOTSWP request.  Note that the swap happened and partition 1 is now the active partition.<br>![Figure 7](images/lab5_figure7.png)
 9. Type 'b' in the terminal to issue a BOOTSWP request.  Note that the swap happened and partition 2 is now the active partition.  Note that you could swap back and forth between both partitions because the FICD_NOBTSWP bit was set based on the UCA2 setting, which was set to ON.  The configuration bits in UCA1 are not used because the UCA configuration bits are loaded on reset only and not on BOOTSWP.  <br>![Figure 8](images/lab5_figure8.png)
