@@ -2,16 +2,11 @@
 ## Release Highlights
 * Improved visibility of how regions track panels
 * Improved sequence number descriptions
+* Fix incorrect memory ranges in image
 
 ## Features Added\Updated
 * Improved visibility of how regions track panels
 * Improved sequence number descriptions
-
-# dsPIC33AK512MPS512 Dual Partition Demo v1.0.2
-## Release Highlights
-* Fix incorrect memory ranges in image
-
-## Features Added\Updated
 * Fix incorrect memory ranges in image
 
 # dsPIC33AK512MPS512 Dual Partition Demo v1.0.1
